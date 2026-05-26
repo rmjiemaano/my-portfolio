@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
+@theme {
+  --color-accent: #f15a24;
+  --color-accent-blue: #4f9eff;
+  --color-bg-primary: #0a0a0f;
+  --color-bg-secondary: #0f0f1a;
+
+  --font-family-display: var(--font-syne), sans-serif;
+  --font-family-body: var(--font-dm), sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #0f0f1a;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(241, 90, 36, 0.4);
+
+  --accent: #f15a24;
+  --accent-soft: rgba(241, 90, 36, 0.15);
+  --accent-glow: rgba(241, 90, 36, 0.3);
+
+  --accent-blue: #4f9eff;
+  --accent-blue-soft: rgba(79, 158, 255, 0.12);
+
+  --text-primary: #f0f0f0;
+  --text-secondary: #8a8a9a;
+  --text-muted: #4a4a5a;
+
+  --font-display: var(--font-syne);
+  --font-body: var(--font-dm);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+.font-display { font-family: var(--font-display), sans-serif; }
+
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+}
+
+.glow-text {
+  color: var(--accent);
+  text-shadow: 0 0 40px var(--accent-glow);
+}
+
+.glow-border {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.orb-orange {
+  background: radial-gradient(circle, rgba(241, 90, 36, 0.25), transparent 70%);
+}
+
+.orb-blue {
+  background: radial-gradient(circle, rgba(79, 158, 255, 0.2), transparent 70%);
 }
