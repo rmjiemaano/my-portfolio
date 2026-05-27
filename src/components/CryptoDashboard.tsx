@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, useCallback, type CSSProperties } from "react";
 import { motion } from "framer-motion";
-import { Wallet, ShieldAlert, Cpu, Layers, RefreshCw, Radio, CheckCircle2 } from "lucide-react";
+import { Wallet, ShieldAlert, Layers, RefreshCw, Radio, CheckCircle2, Flame, IceCream } from "lucide-react";
 
 interface CryptoAsset {
   currency: string;
@@ -12,20 +12,12 @@ interface CryptoAsset {
   upl: string;
 }
 
-interface ApiCapabilities {
-  accountLevel: string;
-  positionMode: string;
-  marginMode: string;
-  greeksDisplay: string;
-  autoBorrowEnabled: string;
-}
-
 interface DashboardMetrics {
   totalEquityUsd: string;
   totalIsolatedMargin: string;
   totalAvailableBalance: string;
+  previousEquityUsd?: string; 
   assets: CryptoAsset[];
-  systemCapabilities: ApiCapabilities;
 }
 
 export function CryptoDashboard() {
@@ -33,7 +25,7 @@ export function CryptoDashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const processFetch = async () => {
+  const processFetch = useCallback(async () => {
     try {
       const response = await fetch("/api/okx");
       const result = await response.json();
@@ -48,7 +40,7 @@ export function CryptoDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleRefresh = () => {
     setLoading(true);
@@ -56,11 +48,18 @@ export function CryptoDashboard() {
     processFetch();
   };
 
+  // Section 2.1: Targeted suppression comment injected directly within the effect body
   useEffect(() => {
-    // Section 2.1: Instruct static analyzer that this async tracking reference is verified safe
     // eslint-disable-next-line react-hooks/set-state-in-effect
     processFetch();
-  }, []);
+  }, [processFetch]);
+
+  const currentEquity = parseFloat(metrics?.totalEquityUsd || "0");
+  const previousEquity = metrics?.previousEquityUsd 
+    ? parseFloat(metrics.previousEquityUsd) 
+    : 0; 
+
+  const isLockedIn = previousEquity === 0 ? true : currentEquity >= previousEquity;
 
   const panelStyle: CSSProperties = {
     position: "relative",
@@ -73,11 +72,14 @@ export function CryptoDashboard() {
     width: "600px",
     height: "600px",
     borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(241,90,36,0.08), transparent 75%)",
+    background: isLockedIn
+      ? "radial-gradient(circle, rgba(16,185,129,0.06), transparent 75%)"
+      : "radial-gradient(circle, rgba(239,68,68,0.06), transparent 75%)",
     filter: "blur(90px)",
     bottom: "-100px",
     right: "-150px",
     pointerEvents: "none",
+    transition: "background 0.5s ease",
   };
 
   const cardStyle: CSSProperties = {
@@ -213,7 +215,7 @@ export function CryptoDashboard() {
               </motion.div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1.51fr 1fr", gap: "2rem", alignItems: "start" }} className="contact-grid">
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "2rem", alignItems: "start" }} className="contact-grid">
               
               <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} style={cardStyle}>
                 <h3 style={{ margin: "0 0 1.5rem 0", fontFamily: "var(--font-display)", fontSize: "1.25rem", color: "var(--text-primary)", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -245,32 +247,41 @@ export function CryptoDashboard() {
               </motion.div>
 
               <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} style={cardStyle}>
-                <h3 style={{ margin: "0 0 1.5rem 0", fontFamily: "var(--font-display)", fontSize: "1.25rem", color: "var(--text-primary)", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <Cpu size={16} color="var(--accent)" /> Key Metric Capabilities
-                </h3>
-                
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: "1.5rem" }}>
-                  These metrics map the underlying operational limits, risk configuration matrices, and settlement setups returned live by your restricted API token.
-                </p>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                  {[
-                    { label: "Account Margin Tier", val: metrics?.systemCapabilities.marginMode },
-                    { label: "Position Structure", val: metrics?.systemCapabilities.positionMode },
-                    { label: "KYC Clearance Level", val: metrics?.systemCapabilities.accountLevel },
-                    { label: "Risk Option Greeks", val: metrics?.systemCapabilities.greeksDisplay },
-                    { label: "Auto-Borrow Engine", val: metrics?.systemCapabilities.autoBorrowEnabled },
-                  ].map((item, idx) => (
-                    <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "0.25rem", borderBottom: "1px solid rgba(255,255,255,0.04)", paddingBottom: "0.75rem" }}>
-                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em" }}>
-                        {item.label}
-                      </span>
-                      <span style={{ color: "var(--text-primary)", fontSize: "0.95rem", fontWeight: 500 }}>
-                        {item.val}
-                      </span>
-                    </div>
-                  ))}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", gap: "1rem" }}>
+                  <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.25rem", color: "var(--text-primary)", fontWeight: 700 }}>
+                    Behind the Terminal
+                  </h3>
+                  
+                  <motion.div
+                    animate={{ scale: [1, 1.03, 1] }}
+                    transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.4rem 0.9rem",
+                      borderRadius: "999px",
+                      fontSize: "0.75rem",
+                      fontWeight: 800,
+                      fontFamily: "var(--font-display)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      backgroundColor: isLockedIn ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
+                      border: isLockedIn ? "1px solid rgba(16,185,129,0.15)" : "1px solid rgba(239,68,68,0.15)",
+                      color: isLockedIn ? "#10b981" : "#ef4444",
+                    }}
+                  >
+                    {isLockedIn ? <IceCream size={12} /> : <Flame size={12} />}
+                    {isLockedIn ? "Locked In" : "Cooked"}
+                  </motion.div>
                 </div>
+                
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.925rem", lineHeight: 1.65, margin: "0 0 1.25rem 0" }}>
+                  Why stream my actual financial assets onto a portfolio page? Because crypto is a long-standing personal hobby of mine, and handling raw market data makes for a perfect testing grounds.
+                </p>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.925rem", lineHeight: 1.65, margin: 0 }}>
+                  Instead of designing a static mockup with hardcoded placeholders, I hooked up a live, restricted API token directly to the OKX order books. This panel monitors how my balances stack up compared to yesterday—giving a running readout of whether my trading setups are currently performing or completely melted down.
+                </p>
               </motion.div>
 
             </div>

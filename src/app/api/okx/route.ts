@@ -1,121 +1,153 @@
 import { NextResponse } from "next/server";
+import fs from "fs/promises";
+import path from "path";
 import crypto from "crypto";
 
-// Section 2.1: Structural Data Contracts for Type Safety
-interface OkxCoinDetail {
-  ccy: string;
-  eq?: string;
-  availBal?: string;
-  frozenBal?: string;
-  upl?: string;
+const SNAPSHOT_PATH = path.join(process.cwd(), "data", "okx-snapshot.json");
+
+interface OkxSnapshot {
+  savedDate: string;
+  previousBalance: string;
+  lastTrackedBalance: string;
 }
 
-interface NormalizedAsset {
-  currency: string;
-  equity: string;
-  available: string;
-  frozen: string;
+interface OkxAssetDetail {
+  ccy: string;
+  eq: string;
+  availEq: string;
+  frozenBal: string;
   upl: string;
 }
 
-function generateOkxHeaders(method: "GET" | "POST", requestPath: string, body: string = "") {
+async function ensureSnapshotFileExists(initialBalance: string): Promise<OkxSnapshot> {
+  const dirPath = path.dirname(SNAPSHOT_PATH);
+  try {
+    await fs.mkdir(dirPath, { recursive: true });
+  } catch {
+    // Directory initialized
+  }
+
+  try {
+    const fileContent = await fs.readFile(SNAPSHOT_PATH, "utf-8");
+    return JSON.parse(fileContent) as OkxSnapshot;
+  } catch {
+    const defaultData: OkxSnapshot = {
+      savedDate: new Date().toISOString().split("T")[0],
+      previousBalance: initialBalance,
+      lastTrackedBalance: initialBalance,
+    };
+    await fs.writeFile(SNAPSHOT_PATH, JSON.stringify(defaultData, null, 2), "utf-8");
+    return defaultData;
+  }
+}
+
+// Section 2.1: Cryptographic helper to sign outbound requests for private OKX V5 endpoints
+function generateOkxHeaders(method: string, requestPath: string) {
   const apiKey = process.env.OKX_API_KEY;
   const apiSecret = process.env.OKX_API_SECRET;
-  const apiPassphrase = process.env.OKX_API_PASSPHRASE;
+  const passphrase = process.env.OKX_API_PASSPHRASE;
 
-  if (!apiKey || !apiSecret || !apiPassphrase) {
-    throw new Error("Missing OKX environment credentials in runtime context.");
+  if (!apiKey || !apiSecret || !passphrase) {
+    throw new Error("Missing OKX Authentication keys in environment profile.");
   }
 
   const timestamp = new Date().toISOString();
-  const prehash = timestamp + method + requestPath + body;
-  
+  const message = timestamp + method + requestPath;
   const signature = crypto
     .createHmac("sha256", apiSecret)
-    .update(prehash)
+    .update(message)
     .digest("base64");
 
   return {
     "OK-ACCESS-KEY": apiKey,
     "OK-ACCESS-SIGN": signature,
     "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": apiPassphrase,
+    "OK-ACCESS-PASSPHRASE": passphrase,
     "Content-Type": "application/json",
   };
 }
 
 export async function GET() {
   try {
-    const baseUrl = "https://www.okx.com";
-    const balancePath = "/api/v5/account/balance";
-    const configPath = "/api/v5/account/config";
+    // Section 2.2: Fetching actual data from the live OKX account balance endpoint
+    const requestPath = "/api/v5/account/balance";
+    const targetUrl = `https://www.okx.com${requestPath}`;
+    const headers = generateOkxHeaders("GET", requestPath);
 
-    const [balanceResponse, configResponse] = await Promise.all([
-      fetch(`${baseUrl}${balancePath}`, {
-        method: "GET",
-        headers: generateOkxHeaders("GET", balancePath),
-        next: { revalidate: 30 },
-      }),
-      fetch(`${baseUrl}${configPath}`, {
-        method: "GET",
-        headers: generateOkxHeaders("GET", configPath),
-        next: { revalidate: 60 },
-      }),
-    ]);
+    const okxResponse = await fetch(targetUrl, {
+      method: "GET",
+      headers: headers,
+      next: { revalidate: 10 }, // Cache response for 10 seconds to throttle reload spam
+    });
 
-    if (!balanceResponse.ok || !configResponse.ok) {
-      return NextResponse.json(
-        { success: false, error: "Failed to communicate securely with OKX API gateways." },
-        { status: 502 }
-      );
+    const okxResult = await okxResponse.json();
+
+    if (!okxResponse.ok || okxResult.code !== "0") {
+      throw new Error(okxResult.msg || `OKX Node returned response status code ${okxResult.code}`);
     }
 
-    const balanceData = await balanceResponse.json();
-    const configData = await configResponse.json();
+    const accountData = okxResult.data[0];
+    
+    // Safely round raw API strings to a clean 2-decimal presentation format
+    const totalEquityUsd = parseFloat(accountData.totalEq || "0").toFixed(2);
+    const totalIsolatedMargin = parseFloat(accountData.isoEq || "0").toFixed(2);
+    const totalAvailableBalance = parseFloat(accountData.availEq || "0").toFixed(2);
 
-    if (balanceData.code !== "0" || configData.code !== "0") {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: "OKX Endpoint Error encountered", 
-          details: balanceData.msg || configData.msg 
-        },
-        { status: 400 }
-      );
-    }
+    // Section 2.3: Map raw account currency details to match your frontend Asset interface
+    const rawAssets: OkxAssetDetail[] = accountData.details || [];
+    const formattedAssets = rawAssets
+      .filter((asset) => parseFloat(asset.eq) > 0.0001) // Filters out empty dust balances
+      .map((asset) => ({
+        currency: asset.ccy,
+        equity: parseFloat(asset.eq).toFixed(4),
+        available: parseFloat(asset.availEq).toFixed(4),
+        frozen: parseFloat(asset.frozenBal).toFixed(4),
+        upl: parseFloat(asset.upl || "0").toFixed(2),
+      }));
 
-    // Section 2.2: Implement concrete type mapping arrays
-    const rawAccount = balanceData.data[0] || {};
-    const rawConfig = configData.data[0] || {};
-
-    const portfolioMetrics = {
-      totalEquityUsd: parseFloat(rawAccount.totalEq || "0").toFixed(2),
-      totalIsolatedMargin: parseFloat(rawAccount.isoEq || "0").toFixed(2),
-      totalAvailableBalance: parseFloat(rawAccount.availEq || "0").toFixed(2),
-      assets: (rawAccount.details as OkxCoinDetail[] || [])
-        .map((coin: OkxCoinDetail): NormalizedAsset => ({
-          currency: coin.ccy,
-          equity: parseFloat(coin.eq || "0").toFixed(4),
-          available: parseFloat(coin.availBal || "0").toFixed(4),
-          frozen: parseFloat(coin.frozenBal || "0").toFixed(4),
-          upl: parseFloat(coin.upl || "0").toFixed(2), 
-        }))
-        .filter((asset: NormalizedAsset) => parseFloat(asset.equity) > 0),
-      systemCapabilities: {
-        accountLevel: rawConfig.level || "Standard Mode",
-        positionMode: rawConfig.posMode === "long_short" ? "Long/Short Multi-Side" : "Net Position Mode",
-        marginMode: rawConfig.acctLv === "1" ? "Simple" : rawConfig.acctLv === "2" ? "Single-Currency" : rawConfig.acctLv === "3" ? "Multi-Currency" : "Portfolio Margin",
-        greeksDisplay: rawConfig.greeksType === "PA" ? "Premium Dollar (PA)" : "Standard Volatility (BS)",
-        autoBorrowEnabled: rawConfig.autoBorrow ? "Active" : "Disabled",
-      }
+    // Construct unified payload matching DashboardMetrics blueprint
+    const liveMetrics = {
+      totalEquityUsd,
+      totalIsolatedMargin,
+      totalAvailableBalance,
+      assets: formattedAssets,
     };
 
-    return NextResponse.json({ success: true, data: portfolioMetrics });
+    // Section 2.4: Evaluation block to update your local snapshot for Cooked/Locked In tracking
+    const todayStr = new Date().toISOString().split("T")[0];
+    const snapshot = await ensureSnapshotFileExists(totalEquityUsd);
+    let historicalClose = snapshot.previousBalance;
 
-  } catch (error: unknown) {
-    console.error("Critical OKX Route Handler Intercept:", error);
+    if (snapshot.savedDate !== todayStr) {
+      historicalClose = snapshot.lastTrackedBalance;
+      const updatedSnapshot: OkxSnapshot = {
+        savedDate: todayStr,
+        previousBalance: historicalClose,
+        lastTrackedBalance: totalEquityUsd,
+      };
+      await fs.writeFile(SNAPSHOT_PATH, JSON.stringify(updatedSnapshot, null, 2), "utf-8");
+    } else {
+      const updatedSnapshot: OkxSnapshot = {
+        ...snapshot,
+        lastTrackedBalance: totalEquityUsd,
+      };
+      await fs.writeFile(SNAPSHOT_PATH, JSON.stringify(updatedSnapshot, null, 2), "utf-8");
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...liveMetrics,
+        previousEquityUsd: historicalClose,
+      },
+    });
+
+  } catch (error) {
     return NextResponse.json(
-      { success: false, error: "Internal processing sequence timeout failure." },
+      { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Internal transport failure inside authentication middleware." 
+      },
       { status: 500 }
     );
   }
