@@ -80,20 +80,21 @@ export default function Hero() {
 
   const headingStyle: CSSProperties = {
     fontFamily: "var(--font-display)",
-    fontSize: "clamp(3rem, 8vw, 6.5rem)",
+    fontSize: "clamp(4rem, 6vw, 8rem)",
     fontWeight: 800,
     lineHeight: 1.05,
     letterSpacing: "-0.03em",
     color: "var(--text-primary)",
-    marginBottom: "1.5rem",
+    marginBottom: "8rem",
+    marginTop: "6rem",
   };
 
   const subStyle: CSSProperties = {
     fontSize: "clamp(1rem, 2vw, 1.25rem)",
     color: "var(--text-secondary)",
-    maxWidth: "520px",
+    maxWidth: "800px",
     lineHeight: 1.7,
-    marginBottom: "2.5rem",
+    margin: "0 auto 2.5rem",
     fontFamily: "var(--font-body)",
   };
 
@@ -130,17 +131,12 @@ export default function Hero() {
 
   const scrollIndicatorStyle: CSSProperties = {
     position: "absolute",
-    bottom: "2rem",
+    bottom: "2.5rem",
     left: "50%",
     transform: "translateX(-50%)",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "0.5rem",
-    color: "var(--text-muted)",
-    fontSize: "0.75rem",
-    letterSpacing: "0.1em",
-    textTransform: "uppercase",
   };
 
   const containerVariants = {
@@ -184,29 +180,30 @@ export default function Hero() {
         <motion.div variants={itemVariants}>
           <span style={badgeStyle}>
             <Sparkles size={14} />
-            Available for freelance work
+            Available for freelance and remote work
           </span>
         </motion.div>
 
         {/* Headline */}
         <motion.h1 variants={itemVariants} style={headingStyle}>
-          I build things
+          I turn ideas
           <br />
-          for the{" "}
+          into{" "}
           <span
             style={{
               color: "var(--accent)",
               textShadow: "0 0 60px rgba(241,90,36,0.4)",
             }}
           >
-            web.
+          <br />
+            reality.
           </span>
         </motion.h1>
 
         {/* Subheading */}
         <motion.p variants={itemVariants} style={subStyle}>
-          Full-stack developer crafting fast, beautiful, and user-focused
-          digital experiences. From concept to deployment — I make it happen.
+          Computer Engineering graduate open to remote work — web development,
+          IT support, automation, and virtual assistance. I get things done.
         </motion.p>
 
         {/* CTAs */}
@@ -237,6 +234,25 @@ export default function Hero() {
           </motion.a>
         </motion.div>
 
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "3rem" }}
+        >
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+            style={{
+              width: "10px",
+              height: "40px",
+              marginBottom: "2rem",
+              background: "linear-gradient(to bottom, var(--accent), transparent)",
+            }}
+          />
+        </motion.div>
+
         {/* Stats row */}
         <motion.div
           variants={itemVariants}
@@ -244,7 +260,7 @@ export default function Hero() {
             display: "flex",
             gap: "3rem",
             justifyContent: "center",
-            marginTop: "4rem",
+            marginTop: "2rem",
             flexWrap: "wrap",
           }}
         >
@@ -279,25 +295,6 @@ export default function Hero() {
             </div>
           ))}
         </motion.div>
-      </motion.div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        style={scrollIndicatorStyle}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 1 }}
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-          style={{
-            width: "1px",
-            height: "40px",
-            background: "linear-gradient(to bottom, var(--accent), transparent)",
-          }}
-        />
-        scroll
       </motion.div>
     </section>
   );

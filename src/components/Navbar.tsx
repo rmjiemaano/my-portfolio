@@ -111,17 +111,19 @@ export default function Navbar() {
         style={navStyle}
       >
         <a href="#" style={logoStyle}>
-          your<span style={{ color: "var(--accent)" }}>name</span>
+          Remejie<span style={{ color: "var(--accent)" }}> Maano</span>
         </a>
 
-        <ul
+          <ul
           style={{
-            display: "flex",
             gap: "2.5rem",
             listStyle: "none",
             alignItems: "center",
             margin: 0,
             padding: 0,
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
           }}
           className="hidden md:flex"
         >

@@ -18,8 +18,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Your Name — Portfolio",
-  description: "Frontend Developer & Designer",
+  title: "Remejie Maano",
+  description: "Remejie Maano — Frontend developer specializing in React, Next.js, and modern UI design.",
 };
 
 export default function RootLayout({
