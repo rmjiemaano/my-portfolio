@@ -1,15 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { type CSSProperties, type FormEvent, useState } from "react";
-import { Mail, MapPin, Send } from "lucide-react";
-// Import FontAwesome Component and Icons
+import { type CSSProperties, type FormEvent, useState, useEffect } from "react";
+import { Mail, MapPin, Send, Loader2 } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFacebookF, faTwitter, faLinkedin, faGithub } from "@fortawesome/free-brands-svg-icons";
+import { faFacebookF, faXTwitter, faLinkedin, faGithub } from "@fortawesome/free-brands-svg-icons";
+
+// Section 3.1: Global scope static rules
+const LIMIT = 2;
+const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const socials = [
-  { icon: faFacebookF, label: "Facebook", href: "https://www.facebook.com/maano.remejie.7" },
-  { icon: faTwitter, label: "Twitter", href: "https://twitter.com/yourhandle" },
+  { icon: faFacebookF, label: "Facebook", href: "https://facebook.com/yourhandle" },
+  { icon: faXTwitter, label: "X", href: "https://x.com/remejie33205" },
   { icon: faLinkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/remejie-maano-954b34411" },
   { icon: faGithub, label: "GitHub", href: "https://github.com/rmjiemaano" },
 ];
@@ -17,6 +20,38 @@ const socials = [
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [sent, setSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
+
+  // Section 3.2: Asynchronous local storage macro-task guard check on mount
+  useEffect(() => {
+    const evaluateSubmissions = () => {
+      const now = Date.now();
+      const stored = localStorage.getItem("contact_submissions");
+      if (stored) {
+        const timestamps: number[] = JSON.parse(stored);
+        const recent = timestamps.filter((t) => now - t < WINDOW_MS);
+        if (recent.length >= LIMIT) {
+          setLimitReached(true);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(evaluateSubmissions, 0);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  const updateClientSideLimit = () => {
+    const now = Date.now();
+    const stored = localStorage.getItem("contact_submissions");
+    const timestamps: number[] = stored ? JSON.parse(stored) : [];
+    const recent = timestamps.filter((t) => now - t < WINDOW_MS);
+    recent.push(now);
+    localStorage.setItem("contact_submissions", JSON.stringify(recent));
+    if (recent.length >= LIMIT) {
+      setLimitReached(true);
+    }
+  };
 
   const sectionStyle: CSSProperties = {
     position: "relative",
@@ -69,10 +104,66 @@ export default function Contact() {
     fontFamily: "var(--font-display)",
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  // Section 3.3: Modernized Two-Tier Validation Submission Process
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSent(true);
-    setForm({ name: "", email: "", message: "" });
+    if (limitReached) return;
+    setIsSubmitting(true);
+
+    try {
+      // Step 1: Query your server gatekeeper to see if this IP is allowed to submit
+      const gatekeeperResponse = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const gatekeeperResult = await gatekeeperResponse.json();
+      
+      if (gatekeeperResponse.status === 429 || gatekeeperResult.error === "RATE_LIMIT_EXCEEDED") {
+        setLimitReached(true);
+        alert("Submission limit reached. Please try again tomorrow.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!gatekeeperResponse.ok || !gatekeeperResult.isAllowed) {
+        alert("Verification failed. Please try again later.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 2: Since server validated the rate limit, dispatch submission from browser to Web3Forms
+      const web3Response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: process.env.NEXT_PUBLIC_WEB3FORMS_KEY,
+          name: form.name,
+          email: form.email,
+          message: form.message,
+        }),
+      });
+
+      const web3Result = await web3Response.json();
+      
+      if (web3Response.ok && web3Result.success) {
+        setSent(true);
+        setForm({ name: "", email: "", message: "" });
+        updateClientSideLimit();
+      } else {
+        alert("Web3Forms endpoint rejected the data. Verify your access key configuration.");
+      }
+    } catch (error) {
+      console.error("Submission Sequence Exception Intercepted:", error);
+      alert("An unexpected transport error occurred while dispatching form metrics.");
+    } {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -80,7 +171,6 @@ export default function Contact() {
       <div style={orbStyle} />
 
       <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
-        {/* Label */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -99,7 +189,6 @@ export default function Contact() {
           Contact
         </motion.p>
 
-        {/* Heading */}
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -119,7 +208,6 @@ export default function Contact() {
           <span style={{ color: "var(--accent)" }}>together.</span>
         </motion.h2>
 
-        {/* Two column layout */}
         <div
           className="contact-grid"
           style={{
@@ -129,7 +217,6 @@ export default function Contact() {
             alignItems: "start",
           }}
         >
-          {/* Left — info */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -146,7 +233,6 @@ export default function Contact() {
               My inbox is always open. I&apos;ll get back to you as soon as possible.
             </p>
 
-            {/* Contact details */}
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {[
                 { icon: Mail, text: "remejiemaano17@gmail.com", href: "mailto:remejiemaano17@gmail.com" },
@@ -188,7 +274,6 @@ export default function Contact() {
               ))}
             </div>
 
-            {/* Socials */}
             <div style={{ display: "flex", gap: "0.75rem" }}>
               {socials.map((social) => (
                 <motion.a
@@ -218,7 +303,6 @@ export default function Contact() {
             </div>
           </motion.div>
 
-          {/* Right — form */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -226,44 +310,171 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.1 }}
             style={cardStyle}
           >
-            {sent ? (
+            {limitReached ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                style={{ textAlign: "center", padding: "2rem 0" }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                style={{ textAlign: "center", padding: "2rem 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.25rem" }}
               >
-                <div style={{
-                  fontSize: "3rem",
-                  marginBottom: "1rem",
-                }}>🎉</div>
-                <h3 style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: "1.5rem",
-                  fontWeight: 700,
-                  color: "var(--text-primary)",
-                  marginBottom: "0.5rem",
-                }}>
-                  Message sent!
-                </h3>
-                <p style={{ color: "var(--text-secondary)" }}>
-                  Thanks for reaching out. I&apos;ll reply soon.
-                </p>
-                <button
-                  onClick={() => setSent(false)}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                   style={{
-                    marginTop: "1.5rem",
+                    width: "72px",
+                    height: "72px",
+                    borderRadius: "50%",
+                    background: "rgba(241,90,36,0.1)",
+                    border: "1px solid rgba(241,90,36,0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 30px rgba(241,90,36,0.2), 0 0 60px rgba(241,90,36,0.1)",
+                  }}
+                >
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                    <motion.path
+                      d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                      stroke="var(--accent)"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+                    />
+                  </svg>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                >
+                  <h3 style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: "1.6rem",
+                    fontWeight: 800,
+                    color: "var(--text-primary)",
+                    marginBottom: "0.5rem",
+                    letterSpacing: "-0.02em",
+                  }}>
+                    Slow down!
+                  </h3>
+                  <p style={{
+                    color: "var(--text-secondary)",
+                    fontSize: "0.95rem",
+                    lineHeight: 1.7,
+                    maxWidth: "280px",
+                    margin: "0 auto",
+                  }}>
+                    You have reached the limit of {LIMIT} messages per 24 hours.
+                    Please try again tomorrow.
+                  </p>
+                </motion.div>
+
+                <div style={{
+                  width: "40px",
+                  height: "1px",
+                  background: "rgba(241,90,36,0.3)",
+                }} />
+              </motion.div>
+            ) : sent ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                style={{ textAlign: "center", padding: "2rem 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.25rem" }}
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  style={{
+                    width: "72px",
+                    height: "72px",
+                    borderRadius: "50%",
+                    background: "rgba(241,90,36,0.1)",
+                    border: "1px solid rgba(241,90,36,0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 30px rgba(241,90,36,0.2), 0 0 60px rgba(241,90,36,0.1)",
+                  }}
+                >
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                    <motion.path
+                      d="M5 13l4 4L19 7"
+                      stroke="var(--accent)"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+                    />
+                  </svg>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                >
+                  <h3 style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: "1.6rem",
+                    fontWeight: 800,
+                    color: "var(--text-primary)",
+                    marginBottom: "0.5rem",
+                    letterSpacing: "-0.02em",
+                  }}>
+                    Message received!
+                  </h3>
+                  <p style={{
+                    color: "var(--text-secondary)",
+                    fontSize: "0.95rem",
+                    lineHeight: 1.7,
+                    maxWidth: "280px",
+                    margin: "0 auto",
+                  }}>
+                    Thanks for reaching out, I&apos;ll get back to you as soon as possible.
+                  </p>
+                </motion.div>
+
+                <div style={{
+                  width: "40px",
+                  height: "1px",
+                  background: "rgba(241,90,36,0.3)",
+                }} />
+
+                <motion.button
+                  onClick={() => setSent(false)}
+                  whileHover={{ scale: 1.03, borderColor: "rgba(241,90,36,0.4)" }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
                     background: "none",
                     border: "1px solid rgba(255,255,255,0.1)",
                     borderRadius: "999px",
-                    padding: "0.6rem 1.5rem",
+                    padding: "0.65rem 1.75rem",
                     color: "var(--text-secondary)",
                     cursor: "pointer",
                     fontSize: "0.875rem",
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 600,
+                    letterSpacing: "0.02em",
+                    transition: "border-color 0.2s ease, color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                   }}
                 >
                   Send another
-                </button>
+                </motion.button>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -282,6 +493,7 @@ export default function Contact() {
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
                     }}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -299,6 +511,7 @@ export default function Contact() {
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
                     }}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -316,12 +529,14 @@ export default function Contact() {
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
                     }}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <motion.button
                   type="submit"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  disabled={isSubmitting}
+                  whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                  whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -335,11 +550,20 @@ export default function Contact() {
                     fontSize: "1rem",
                     fontWeight: 600,
                     fontFamily: "var(--font-display)",
-                    cursor: "pointer",
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
                     boxShadow: "0 0 30px var(--accent-glow)",
+                    opacity: isSubmitting ? 0.7 : 1,
                   }}
                 >
-                  Send Message <Send size={16} />
+                  {isSubmitting ? (
+                    <>
+                      Sending... <Loader2 size={16} className="animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      Send Message <Send size={16} />
+                    </>
+                  )}
                 </motion.button>
               </form>
             )}
