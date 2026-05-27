@@ -2,12 +2,16 @@
 
 import { motion } from "framer-motion";
 import { type CSSProperties, type FormEvent, useState } from "react";
-import { Mail, MapPin, Send, ExternalLink, GitBranch } from "lucide-react";
+import { Mail, MapPin, Send } from "lucide-react";
+// Import FontAwesome Component and Icons
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFacebookF, faTwitter, faLinkedin, faGithub } from "@fortawesome/free-brands-svg-icons";
 
 const socials = [
-  { icon: ExternalLink, label: "Twitter", href: "https://twitter.com/yourhandle" },
-  { icon: ExternalLink, label: "LinkedIn", href: "https://linkedin.com/in/yourhandle" },
-  { icon: GitBranch, label: "GitHub", href: "https://github.com/yourhandle" },
+  { icon: faFacebookF, label: "Facebook", href: "https://www.facebook.com/maano.remejie.7" },
+  { icon: faTwitter, label: "Twitter", href: "https://twitter.com/yourhandle" },
+  { icon: faLinkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/remejie-maano-954b34411" },
+  { icon: faGithub, label: "GitHub", href: "https://github.com/rmjiemaano" },
 ];
 
 export default function Contact() {
@@ -145,7 +149,7 @@ export default function Contact() {
             {/* Contact details */}
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {[
-                { icon: Mail, text: "hello@yourname.com", href: "mailto:hello@yourname.com" },
+                { icon: Mail, text: "remejiemaano17@gmail.com", href: "mailto:remejiemaano17@gmail.com" },
                 { icon: MapPin, text: "Dumaguete, Philippines", href: "#" },
               ].map((item) => (
                 <a
@@ -208,7 +212,7 @@ export default function Contact() {
                     textDecoration: "none",
                   }}
                 >
-                  <social.icon size={18} />
+                  <FontAwesomeIcon icon={social.icon} style={{ fontSize: "18px" }} />
                 </motion.a>
               ))}
             </div>

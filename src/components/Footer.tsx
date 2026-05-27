@@ -22,7 +22,7 @@ export default function Footer() {
           fontSize: "1rem",
           color: "var(--text-primary)",
         }}>
-          your<span style={{ color: "var(--accent)" }}>name</span>
+          Remejie<span style={{ color: "var(--accent)" }}> Maano</span>
         </span>
         <span style={{
           color: "var(--text-muted)",
