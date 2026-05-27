@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Syne } from "next/font/google";
 import { DM_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import CursorGlow from "@/components/CursorGlow";
 import "./globals.css";
 
 const syne = Syne({
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${syne.variable} ${dmSans.variable}`}>
       <body>
+        <CursorGlow />
         <Navbar />
         {children}
       </body>

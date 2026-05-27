@@ -1,12 +1,17 @@
+import Hero from "@/components/Hero";
+import About from "@/components/About";
+import Projects from "@/components/Projects";
+import Contact from "@/components/Contact";
+import Footer from "@/components/Footer";
+
 export default function Home() {
   return (
-    <main style={{ padding: "4rem", textAlign: "center" }}>
-      <h1 className="font-display glow-text" style={{ fontSize: "3rem" }}>
-        Design System ✓
-      </h1>
-      <p style={{ color: "var(--text-secondary)", marginTop: "1rem" }}>
-        Fonts, colors, and CSS variables are working.
-      </p>
+    <main>
+      <Hero />
+      <About />
+      <Projects />
+      <Contact />
+      <Footer />
     </main>
   );
 }

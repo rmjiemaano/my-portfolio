@@ -10,6 +10,16 @@
   --font-family-body: var(--font-dm), sans-serif;
 }
 
+@media (max-width: 768px) {
+  .about-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+  }
+  .contact-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 :root {
   --bg-primary: #0a0a0f;
   --bg-secondary: #0f0f1a;
@@ -88,4 +98,13 @@ body {
 
 .orb-blue {
   background: radial-gradient(circle, rgba(79, 158, 255, 0.2), transparent 70%);
+}
+
+section {
+  transition: opacity 0.3s ease;
+}
+
+::selection {
+  background: rgba(241, 90, 36, 0.3);
+  color: #fff;
 }
