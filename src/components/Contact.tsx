@@ -11,7 +11,7 @@ const LIMIT = 2;
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const socials = [
-  { icon: faFacebookF, label: "Facebook", href: "https://facebook.com/yourhandle" },
+  { icon: faFacebookF, label: "Facebook", href: "https://www.facebook.com/maano.remejie.7" },
   { icon: faXTwitter, label: "X", href: "https://x.com/remejie33205" },
   { icon: faLinkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/remejie-maano-954b34411" },
   { icon: faGithub, label: "GitHub", href: "https://github.com/rmjiemaano" },
