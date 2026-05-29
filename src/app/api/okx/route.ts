@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { Redis } from "@upstash/redis";
 import crypto from "crypto";
 
-const SNAPSHOT_PATH = path.join(process.cwd(), "data", "okx-snapshot.json");
+// Initialize Upstash Redis client (automatically looks for UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in env)
+const redis = Redis.fromEnv();
+const REDIS_SNAPSHOT_KEY = "okx:snapshot";
 
 interface HistoryEntry {
   date: string;
@@ -31,11 +32,9 @@ function seedHistoricalData(currentBalance: number): HistoryEntry[] {
   const today = new Date();
   
   if (currentBalance === 0) {
-    // Replicates the exact historical cliff-drop from $70.49 seen on your OKX app screen
     for (let i = 30; i > 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      // The first few days reflect the active asset balance before the withdrawal/transfer flatline
       const balance = i > 26 ? "70.49" : "0.00";
       history.push({
         date: d.toISOString().split("T")[0],
@@ -56,50 +55,48 @@ function seedHistoricalData(currentBalance: number): HistoryEntry[] {
   return history;
 }
 
-async function ensureSnapshotFileExists(initialBalance: string): Promise<OkxSnapshot> {
-  const dirPath = path.dirname(SNAPSHOT_PATH);
-  try {
-    await fs.mkdir(dirPath, { recursive: true });
-  } catch {
-    // Directory initialized
-  }
-
+async function ensureSnapshotExists(initialBalance: string): Promise<OkxSnapshot> {
   const initialBalNum = parseFloat(initialBalance) || 0;
   const todayStr = new Date().toISOString().split("T")[0];
 
   try {
-    const fileContent = await fs.readFile(SNAPSHOT_PATH, "utf-8");
-    const parsed = JSON.parse(fileContent) as OkxSnapshot;
+    // Read snapshot configuration object from Upstash cloud memory instead of local disk
+    const parsed = await redis.get<OkxSnapshot>(REDIS_SNAPSHOT_KEY);
     
-    // SELF-HEALING BLOCK: If your balance is $0 but the history file still contains old high ghost metrics, clear them out
-    const hasOldMockData = parsed.history && parsed.history.some(h => parseFloat(h.balance) > 100);
-    if (initialBalNum === 0 && hasOldMockData) {
-      parsed.history = seedHistoricalData(initialBalNum);
-      parsed.previousBalance = "70.49";
-      parsed.lastTrackedBalance = "0.00";
-      
-      const resetData: OkxSnapshot = {
-        savedDate: todayStr,
-        previousBalance: "70.49",
-        lastTrackedBalance: "0.00",
-        history: parsed.history,
-      };
-      await fs.writeFile(SNAPSHOT_PATH, JSON.stringify(resetData, null, 2), "utf-8");
-      return resetData;
-    }
+    if (parsed) {
+      // SELF-HEALING BLOCK: If balance is $0 but history contains high ghost metrics, clear them
+      const hasOldMockData = parsed.history && parsed.history.some(h => parseFloat(h.balance) > 100);
+      if (initialBalNum === 0 && hasOldMockData) {
+        parsed.history = seedHistoricalData(initialBalNum);
+        parsed.previousBalance = "70.49";
+        parsed.lastTrackedBalance = "0.00";
+        
+        const resetData: OkxSnapshot = {
+          savedDate: todayStr,
+          previousBalance: "70.49",
+          lastTrackedBalance: "0.00",
+          history: parsed.history,
+        };
+        await redis.set(REDIS_SNAPSHOT_KEY, resetData);
+        return resetData;
+      }
 
-    if (!parsed.history) parsed.history = seedHistoricalData(initialBalNum);
-    return parsed;
-  } catch {
-    const defaultData: OkxSnapshot = {
-      savedDate: todayStr,
-      previousBalance: initialBalNum === 0 ? "70.49" : initialBalance,
-      lastTrackedBalance: initialBalance,
-      history: seedHistoricalData(initialBalNum),
-    };
-    await fs.writeFile(SNAPSHOT_PATH, JSON.stringify(defaultData, null, 2), "utf-8");
-    return defaultData;
+      if (!parsed.history) parsed.history = seedHistoricalData(initialBalNum);
+      return parsed;
+    }
+  } catch (error) {
+    console.error("Upstash Redis fetch error, falling back to local initialization loop:", error);
   }
+
+  // Initial seed configuration if database entry does not exist yet
+  const defaultData: OkxSnapshot = {
+    savedDate: todayStr,
+    previousBalance: initialBalNum === 0 ? "70.49" : initialBalance,
+    lastTrackedBalance: initialBalance,
+    history: seedHistoricalData(initialBalNum),
+  };
+  await redis.set(REDIS_SNAPSHOT_KEY, defaultData);
+  return defaultData;
 }
 
 function generateOkxHeaders(method: string, requestPath: string) {
@@ -170,7 +167,7 @@ export async function GET() {
     };
 
     const todayStr = new Date().toISOString().split("T")[0];
-    const snapshot = await ensureSnapshotFileExists(totalEquityUsd);
+    const snapshot = await ensureSnapshotExists(totalEquityUsd);
     let historicalClose = snapshot.previousBalance;
     let currentHistory = [...(snapshot.history || [])];
 
@@ -192,14 +189,14 @@ export async function GET() {
         lastTrackedBalance: totalEquityUsd,
         history: currentHistory,
       };
-      await fs.writeFile(SNAPSHOT_PATH, JSON.stringify(updatedSnapshot, null, 2), "utf-8");
+      await redis.set(REDIS_SNAPSHOT_KEY, updatedSnapshot);
     } else {
       const updatedSnapshot: OkxSnapshot = {
         ...snapshot,
         lastTrackedBalance: totalEquityUsd,
         history: currentHistory,
       };
-      await fs.writeFile(SNAPSHOT_PATH, JSON.stringify(updatedSnapshot, null, 2), "utf-8");
+      await redis.set(REDIS_SNAPSHOT_KEY, updatedSnapshot);
     }
 
     return NextResponse.json({
