@@ -133,7 +133,7 @@ export async function GET() {
     const okxResponse = await fetch(targetUrl, {
       method: "GET",
       headers: headers,
-      next: { revalidate: 10 },
+      next: { revalidate: 300 },
     });
 
     const okxResult = await okxResponse.json();
