@@ -1,57 +1,50 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { type CSSProperties } from "react";
-import { ArrowUpRight, GitBranch } from "lucide-react";
+import { useState, type CSSProperties } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUpRight, GitBranch, FileText, Maximize2, X } from "lucide-react";
 
 const projects = [
   {
-    title: "Project Alpha",
+    title: "Autonomous Smart Floating Waste Collector with Integrated Docking System",
     description:
-      "A full-stack SaaS platform with real-time collaboration, authentication, and a powerful dashboard. Built for scale.",
-    tags: ["Next.js", "TypeScript", "PostgreSQL", "Stripe"],
-    live: "https://example.com",
-    github: "https://github.com",
+      "Multi-microcontroller autonomous boat (Raspberry Pi 4B, Arduino Mega, ESP32) with YOLOv26 real-time waste detection over UDP. Features ArUco marker-based auto-docking, GPS/compass fallback navigation, LoRa remote control, and SMS alert notifications.",
+    tags: ["Raspberry Pi", "Arduino", "ESP32", "YOLOv26", "Python", "LoRa"],
+    live: "https://docs.google.com/document/d/1n4Kst77XRPygKwaXowPM5JMBHAgsps9jYDxCeFlQKsY/edit?usp=sharing",
+    github: "",
     featured: true,
-    gradient: "linear-gradient(135deg, rgba(241,90,36,0.15), rgba(79,158,255,0.1))",
+    mediaType: "video",
+    videoSrc: "/videos/thesis.mp4", // Stored in public/videos/thesis.mp4
+    aspectRatio: "16/9",            // Widescreen layout for the boat system
+    gradient: "linear-gradient(135deg, rgba(241,90,36,0.12), rgba(79,158,255,0.08))",
     accentColor: "var(--accent)",
+    liveLabel: "Research Paper",
+    liveIcon: FileText,
   },
   {
-    title: "Project Beta",
+    title: "Numerical Methods Calculator App",
     description:
-      "An AI-powered content generation tool that helps creators write faster. Integrated with OpenAI and deployed on Vercel.",
-    tags: ["React", "OpenAI", "Node.js", "MongoDB"],
-    live: "https://example.com",
-    github: "https://github.com",
+      "An educational Android application designed to solve large systems of linear equations (up to 10x10) using 5 core numerical methods (Cramer's, Gauss, Gauss-Jordan, Jacobi, Gauss-Seidel). Features step-by-step visual solutions to minimize cognitive load, validated by a task-based study with 100% completion metrics.",
+    tags: ["Java", "Android SDK", "Numerical Methods", "OOP Design"],
+    live: "https://norsu.edu.ph/files/wuri/2025/C3-01.docx.pdf",
     featured: true,
-    gradient: "linear-gradient(135deg, rgba(79,158,255,0.15), rgba(139,92,246,0.1))",
+    mediaType: "video",
+    videoSrc: "/videos/calculator.mp4", // Stored in public/videos/calculator.mp4
+    aspectRatio: "9/16",                // Premium portrait layout for mobile app view
+    gradient: "linear-gradient(135deg, rgba(79,158,255,0.12), rgba(139,92,246,0.08))",
     accentColor: "var(--accent-blue)",
-  },
-  {
-    title: "Project Gamma",
-    description:
-      "E-commerce storefront with a custom CMS, cart system, and seamless checkout experience.",
-    tags: ["Next.js", "Sanity", "Tailwind", "Vercel"],
-    live: "https://example.com",
-    github: "https://github.com",
-    featured: false,
-    gradient: "linear-gradient(135deg, rgba(241,90,36,0.1), rgba(241,90,36,0.05))",
-    accentColor: "var(--accent)",
-  },
-  {
-    title: "Project Delta",
-    description:
-      "A developer portfolio template with dark mode, animations, and a clean minimal design system.",
-    tags: ["React", "Framer Motion", "TypeScript"],
-    live: "https://example.com",
-    github: "https://github.com",
-    featured: false,
-    gradient: "linear-gradient(135deg, rgba(79,158,255,0.1), rgba(79,158,255,0.05))",
-    accentColor: "var(--accent-blue)",
+    liveLabel: "Read Paper",
+    liveIcon: FileText,
   },
 ];
 
 export default function Projects() {
+  const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
+
+  // Find the currently expanded project to figure out its structural layout constraints
+  const currentExpandedProject = projects.find((p) => p.videoSrc === expandedVideo);
+  const modalAspectRatio = currentExpandedProject?.aspectRatio || "9/16";
+
   const sectionStyle: CSSProperties = {
     position: "relative",
     padding: "8rem 1.5rem",
@@ -78,19 +71,9 @@ export default function Projects() {
     padding: "2.5rem",
     backdropFilter: "blur(10px)",
     transition: "border-color 0.3s ease",
-  };
-
-  const smallCardStyle: CSSProperties = {
-    position: "relative",
-    borderRadius: "16px",
-    border: "1px solid rgba(255,255,255,0.07)",
-    overflow: "hidden",
-    padding: "2rem",
-    backdropFilter: "blur(10px)",
-    transition: "border-color 0.3s ease",
     display: "flex",
     flexDirection: "column",
-    gap: "1rem",
+    gap: "1.25rem",
   };
 
   const tagStyle: CSSProperties = {
@@ -127,16 +110,11 @@ export default function Projects() {
     },
   };
 
-  const featured = projects.filter((p) => p.featured);
-  const rest = projects.filter((p) => !p.featured);
-
   return (
     <section id="projects" style={sectionStyle}>
       <div style={orbStyle} />
 
-      <div
-        style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}
-      >
+      <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
         {/* Label */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -172,240 +150,323 @@ export default function Projects() {
             lineHeight: 1.1,
           }}
         >
-          Things I&apos;ve{" "}
-          <span style={{ color: "var(--accent)" }}>built.</span>
+          Things I&apos;ve <span style={{ color: "var(--accent)" }}>built.</span>
         </motion.h2>
 
-        {/* Featured projects */}
+        {/* Featured projects — stacked full width */}
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           transition={{ staggerChildren: 0.15 }}
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "1.5rem",
-            marginBottom: "1.5rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "2rem",
           }}
         >
-          {featured.map((project) => (
-            <motion.div
-              key={project.title}
-              variants={fadeUp}
-              whileHover={{ y: -6, borderColor: "rgba(241,90,36,0.25)" }}
-              style={{ ...featuredCardStyle, background: project.gradient }}
-            >
-              {/* Top row */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  marginBottom: "1.5rem",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "0.7rem",
-                    fontWeight: 600,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: project.accentColor,
-                    fontFamily: "var(--font-display)",
-                  }}
-                >
-                  Featured
-                </span>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <motion.a
-                    href={project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={iconBtnStyle}
-                    whileHover={{ scale: 1.1, borderColor: "rgba(255,255,255,0.25)" }}
-                  >
-                    <GitBranch size={16} />
-                  </motion.a>
-                  <motion.a
-                    href={project.live}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={iconBtnStyle}
-                    whileHover={{ scale: 1.1, borderColor: "rgba(255,255,255,0.25)" }}
-                  >
-                    <ArrowUpRight size={16} />
-                  </motion.a>
-                </div>
-              </div>
+          {projects.map((project, index) => {
+            const LiveIcon = project.liveIcon;
+            const isEven = index % 2 === 0;
 
-              {/* Mock UI preview */}
-              <div
-                style={{
-                  borderRadius: "12px",
-                  background: "rgba(0,0,0,0.3)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  height: "160px",
-                  marginBottom: "1.5rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                  position: "relative",
-                }}
+            return (
+              <motion.div
+                key={project.title}
+                variants={fadeUp}
+                whileHover={{ y: -4, borderColor: "rgba(241,90,36,0.2)" }}
+                style={{ ...featuredCardStyle, background: project.gradient }}
               >
-                {/* Fake browser chrome */}
                 <div
                   style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: "28px",
-                    background: "rgba(255,255,255,0.04)",
-                    borderBottom: "1px solid rgba(255,255,255,0.06)",
-                    display: "flex",
+                    display: "grid",
+                    gridTemplateColumns: isEven ? "1fr 1.1fr" : "1.1fr 1fr",
+                    gap: "2.5rem",
                     alignItems: "center",
-                    gap: "6px",
-                    padding: "0 12px",
                   }}
+                  className="project-inner-grid"
                 >
-                  {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
-                    <div
-                      key={c}
+                  {/* Media container side */}
+                  <div style={{ order: isEven ? 0 : 1 }} className="project-image-col">
+                    {project.mediaType === "video" ? (
+                      <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                        <div
+                          onClick={() => setExpandedVideo(project.videoSrc || null)}
+                          style={{
+                            borderRadius: project.aspectRatio === "9/16" ? "20px" : "12px",
+                            overflow: "hidden",
+                            border: project.aspectRatio === "9/16" ? "4px solid rgba(255,255,255,0.12)" : "1px solid rgba(255,255,255,0.08)",
+                            background: "#000",
+                            position: "relative",
+                            width: "100%",
+                            maxWidth: project.aspectRatio === "9/16" ? "230px" : "100%", 
+                            aspectRatio: project.aspectRatio,
+                            cursor: "pointer",
+                            boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
+                          }}
+                          className="group"
+                        >
+                          {/* Top Browser bar for 16:9 Landscape projects */}
+                          {project.aspectRatio === "16/9" && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: "24px",
+                                background: "rgba(0,0,0,0.4)",
+                                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                padding: "0 10px",
+                                zIndex: 3,
+                              }}
+                            >
+                              {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+                                <div
+                                  key={c}
+                                  style={{
+                                    width: "7px",
+                                    height: "7px",
+                                    borderRadius: "50%",
+                                    background: c,
+                                    opacity: 0.8,
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Hover Overlay Icon Indicator */}
+                          <div style={{
+                            position: "absolute",
+                            inset: 0,
+                            background: "rgba(0,0,0,0.3)",
+                            opacity: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 2,
+                            transition: "opacity 0.2s ease",
+                            paddingTop: project.aspectRatio === "16/9" ? "24px" : "0",
+                          }}
+                          className="video-hover-overlay"
+                          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                          >
+                            <div style={{
+                              background: "rgba(255,255,255,0.15)",
+                              backdropFilter: "blur(8px)",
+                              borderRadius: "50%",
+                              padding: "0.75rem",
+                              border: "1px solid rgba(255,255,255,0.2)"
+                            }}>
+                              <Maximize2 size={18} color="#fff" />
+                            </div>
+                          </div>
+
+                          <video
+                            src={project.videoSrc}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              paddingTop: project.aspectRatio === "16/9" ? "24px" : "0",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Content side */}
+                  <div style={{ order: isEven ? 1 : 0, display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <span
                       style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        background: c,
-                        opacity: 0.7,
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        color: project.accentColor,
+                        fontFamily: "var(--font-display)",
                       }}
-                    />
-                  ))}
-                </div>
-                <p
-                  style={{
-                    color: "rgba(255,255,255,0.15)",
-                    fontSize: "0.75rem",
-                    fontFamily: "var(--font-body)",
-                    marginTop: "28px",
-                  }}
-                >
-                  {project.title}
-                </p>
-              </div>
+                    >
+                      Featured Project
+                    </span>
 
-              {/* Info */}
-              <h3
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: "1.3rem",
-                  fontWeight: 700,
-                  color: "var(--text-primary)",
-                  marginBottom: "0.6rem",
-                }}
-              >
-                {project.title}
-              </h3>
-              <p
-                style={{
-                  fontSize: "0.9rem",
-                  color: "var(--text-secondary)",
-                  lineHeight: 1.7,
-                  marginBottom: "1.25rem",
-                }}
-              >
-                {project.description}
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                {project.tags.map((tag) => (
-                  <span key={tag} style={tagStyle}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+                    <h3
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: "1.4rem",
+                        fontWeight: 800,
+                        color: "var(--text-primary)",
+                        lineHeight: 1.2,
+                        margin: 0,
+                      }}
+                    >
+                      {project.title}
+                    </h3>
 
-        {/* Smaller projects */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          transition={{ staggerChildren: 0.1 }}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: "1.25rem",
-          }}
-        >
-          {rest.map((project) => (
-            <motion.div
-              key={project.title}
-              variants={fadeUp}
-              whileHover={{ y: -4, borderColor: "rgba(241,90,36,0.2)" }}
-              style={{ ...smallCardStyle, background: project.gradient }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <h3
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "1.1rem",
-                    fontWeight: 700,
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {project.title}
-                </h3>
-                <div style={{ display: "flex", gap: "0.4rem" }}>
-                  <motion.a
-                    href={project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={iconBtnStyle}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <GitBranch size={14} />
-                  </motion.a>
-                  <motion.a
-                    href={project.live}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={iconBtnStyle}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <ArrowUpRight size={14} />
-                  </motion.a>
+                    {/* Description card */}
+                    <div
+                      style={{
+                        background: "rgba(0,0,0,0.25)",
+                        border: "1px solid rgba(255,255,255,0.06)",
+                        borderRadius: "12px",
+                        padding: "1rem 1.25rem",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "var(--text-secondary)",
+                          lineHeight: 1.75,
+                          margin: 0,
+                        }}
+                      >
+                        {project.description}
+                      </p>
+                    </div>
+
+                    {/* Tags */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                      {project.tags.map((tag) => (
+                        <span key={tag} style={tagStyle}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Links */}
+                    <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
+                      <motion.a
+                        href={project.live}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.97 }}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.4rem",
+                          background: "var(--accent)",
+                          color: "#fff",
+                          padding: "0.55rem 1.2rem",
+                          borderRadius: "999px",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          textDecoration: "none",
+                          fontFamily: "var(--font-display)",
+                          boxShadow: "0 0 20px var(--accent-glow)",
+                        }}
+                      >
+                        <LiveIcon size={13} />
+                        {project.liveLabel}
+                      </motion.a>
+
+                      {project.github && (
+                        <motion.a
+                          href={project.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.1 }}
+                          style={iconBtnStyle}
+                          title="GitHub"
+                        >
+                          <GitBranch size={15} />
+                        </motion.a>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <p
-                style={{
-                  fontSize: "0.875rem",
-                  color: "var(--text-secondary)",
-                  lineHeight: 1.7,
-                  flex: 1,
-                }}
-              >
-                {project.description}
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                {project.tags.map((tag) => (
-                  <span key={tag} style={tagStyle}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
+
+      {/* Expandable Video Lightbox Modal Frame */}
+      <AnimatePresence>
+        {expandedVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpandedVideo(null)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(12px)",
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "2rem",
+              cursor: "zoom-out",
+            }}
+          >
+            <motion.button
+              onClick={() => setExpandedVideo(null)}
+              style={{
+                position: "absolute",
+                top: "1.5rem",
+                right: "1.5rem",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#fff",
+                borderRadius: "50%",
+                width: "44px",
+                height: "44px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <X size={20} />
+            </motion.button>
+
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()} 
+              style={{
+                position: "relative",
+                width: modalAspectRatio === "16/9" ? "min(90vw, 1050px)" : "auto",
+                height: modalAspectRatio === "16/9" ? "auto" : "85vh",
+                aspectRatio: modalAspectRatio,
+                background: "#000",
+                borderRadius: "24px",
+                overflow: "hidden",
+                border: "1px solid rgba(255,255,255,0.1)",
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)",
+                cursor: "default",
+              }}
+            >
+              <video
+                src={expandedVideo}
+                autoPlay
+                controls
+                loop
+                playsInline
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

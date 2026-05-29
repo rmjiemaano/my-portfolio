@@ -29,7 +29,7 @@ export default function Footer() {
           fontSize: "0.8rem",
           fontFamily: "var(--font-body)",
         }}>
-          © {new Date().getFullYear()} — Built with Next.js & Framer Motion
+          © {new Date().getFullYear()} Remejie Maano. All rights reserved. — Built with Next.js, Framer Motion, Upstash, Web3Forms, and assisted by AI.
         </span>
       </div>
     </footer>

@@ -11,8 +11,9 @@ export default function Hero() {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
-    paddingTop: "70px",
+    overflowX: "hidden", // Fixes horizontal orb overflow while enabling natural mobile vertical scrolling
+    paddingTop: "80px",
+    paddingBottom: "3rem", // Ensures breathing room at the bottom on mobile devices
   };
 
   const orbOneStyle: CSSProperties = {
@@ -74,27 +75,27 @@ export default function Hero() {
     fontSize: "0.8rem",
     color: "var(--accent)",
     fontWeight: 500,
-    marginBottom: "1.5rem",
+    marginBottom: "1rem",
     fontFamily: "var(--font-body)",
   };
 
   const headingStyle: CSSProperties = {
     fontFamily: "var(--font-display)",
-    fontSize: "clamp(4rem, 6vw, 8rem)",
+    fontSize: "clamp(2.5rem, 6vw, 7rem)", // Lowered minimum from 4rem to 2.5rem so it perfectly wraps on mobile screens
     fontWeight: 800,
-    lineHeight: 1.05,
+    lineHeight: 1.1,
     letterSpacing: "-0.03em",
     color: "var(--text-primary)",
-    marginBottom: "8rem",
-    marginTop: "6rem",
+    marginBottom: "2.5rem", // Reduced from 8rem to stop pushing cards out of view
+    marginTop: "2rem",    // Reduced from 6rem to maximize layout efficiency
   };
 
   const subStyle: CSSProperties = {
-    fontSize: "clamp(1rem, 2vw, 1.25rem)",
+    fontSize: "clamp(0.95rem, 2vw, 1.25rem)",
     color: "var(--text-secondary)",
     maxWidth: "800px",
-    lineHeight: 1.7,
-    margin: "0 auto 2.5rem",
+    lineHeight: 1.6,
+    margin: "0 auto 2rem",
     fontFamily: "var(--font-body)",
   };
 
@@ -129,16 +130,6 @@ export default function Hero() {
     backdropFilter: "blur(10px)",
   };
 
-  const scrollIndicatorStyle: CSSProperties = {
-    position: "absolute",
-    bottom: "2.5rem",
-    left: "50%",
-    transform: "translateX(-50%)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  };
-
   const containerVariants = {
     hidden: {},
     visible: {
@@ -147,12 +138,12 @@ export default function Hero() {
   };
 
   const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: "easeOut" as const },
-  },
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.7, ease: "easeOut" as const },
+    },
   };
 
   return (
@@ -172,8 +163,9 @@ export default function Hero() {
           position: "relative",
           zIndex: 1,
           textAlign: "center",
-          padding: "0 1.5rem",
+          padding: "0 1rem",
           maxWidth: "900px",
+          width: "100%",
         }}
       >
         {/* Badge */}
@@ -195,7 +187,6 @@ export default function Hero() {
               textShadow: "0 0 60px rgba(241,90,36,0.4)",
             }}
           >
-          <br />
             reality.
           </span>
         </motion.h1>
@@ -214,6 +205,7 @@ export default function Hero() {
             gap: "1rem",
             justifyContent: "center",
             flexWrap: "wrap",
+            marginBottom: "2.5rem",
           }}
         >
           <motion.a
@@ -234,63 +226,93 @@ export default function Hero() {
           </motion.a>
         </motion.div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator - Configured softly for mobile layouts */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "3rem" }}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "1.5rem 0" }}
         >
           <motion.div
-            animate={{ y: [0, 8, 0] }}
+            animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
             style={{
-              width: "10px",
-              height: "40px",
-              marginBottom: "2rem",
+              width: "8px",
+              height: "32px",
               background: "linear-gradient(to bottom, var(--accent), transparent)",
             }}
           />
         </motion.div>
 
-        {/* Stats row */}
+        {/* Achievements & Growth Highlights */}
         <motion.div
           variants={itemVariants}
           style={{
-            display: "flex",
-            gap: "3rem",
-            justifyContent: "center",
-            marginTop: "2rem",
-            flexWrap: "wrap",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", // Safely scales cards down on narrower displays
+            gap: "1rem",
+            width: "100%",
+            maxWidth: "850px",
+            margin: "1.5rem auto 0",
           }}
         >
           {[
-            { value: "2+", label: "Years Experience" },
-            { value: "20+", label: "Projects Built" },
-            { value: "10+", label: "Happy Clients" },
-          ].map((stat) => (
-            <div key={stat.label} style={{ textAlign: "center" }}>
+            {
+              title: "DOST Scholar & Honors",
+              description: "Dean's Lister graduate recognized for academic excellence and technical problem-solving capabilities.",
+            },
+            {
+              title: "Adaptive Learner",
+              description: "Fresh graduate motivated to tackle new engineering stacks, master workflows, and grow rapidly with a team.",
+            },
+            {
+              title: "Full-Stack + Hardware",
+              description: "Its capability extends from creating company web architectures to assembling multi-microcontroller automated systems.",
+            },
+          ].map((highlight, index) => (
+            <div
+              key={index}
+              style={{
+                background: "rgba(255, 255, 255, 0.02)",
+                border: "1px solid rgba(255, 255, 255, 0.05)",
+                borderRadius: "14px",
+                padding: "1.25rem",
+                textAlign: "left",
+                backdropFilter: "blur(10px)",
+                transition: "border-color 0.25s ease, background-color 0.25s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(241, 90, 36, 0.3)";
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.05)";
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
+              }}
+            >
               <div
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "2rem",
-                  fontWeight: 800,
-                  color: "var(--accent)",
-                  lineHeight: 1,
+                  fontSize: "1.05rem",
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                  marginBottom: "0.4rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.4rem"
                 }}
               >
-                {stat.value}
+                <span style={{ color: "var(--accent)" }}>//</span> {highlight.title}
               </div>
               <div
                 style={{
-                  fontSize: "0.8rem",
-                  color: "var(--text-muted)",
-                  marginTop: "0.4rem",
-                  letterSpacing: "0.05em",
-                  textTransform: "uppercase",
+                  fontSize: "0.82rem",
+                  color: "var(--text-secondary)",
+                  lineHeight: 1.45,
+                  fontFamily: "var(--font-body)",
                 }}
               >
-                {stat.label}
+                {highlight.description}
               </div>
             </div>
           ))}

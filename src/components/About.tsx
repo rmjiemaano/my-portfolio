@@ -2,35 +2,51 @@
 
 import { motion } from "framer-motion";
 import { type CSSProperties } from "react";
-import { Code2, Palette, Zap, Globe } from "lucide-react";
+import { Code2, Cpu, Wrench, Lightbulb } from "lucide-react";
 
 const skills = [
-  { category: "Frontend", items: ["React", "Next.js", "TypeScript", "Tailwind CSS"] },
-  { category: "Backend", items: ["Node.js", "Express", "PostgreSQL", "MongoDB"] },
-  { category: "Tools", items: ["Git", "Figma", "Docker", "Vercel"] },
-  { category: "Other", items: ["REST APIs", "GraphQL", "AWS", "Linux"] },
+{ 
+    category: "Frontend", 
+    items: ["Vue.js", "Nuxt.js", "React", "Next.js", "TypeScript", "Tailwind CSS"] 
+  },
+  { 
+    category: "Backend & Systems", 
+    items: ["Node.js", "Python", "PostgreSQL", "REST APIs"] 
+  },
+  { 
+    category: "Hardware & IoT", 
+    items: ["Raspberry Pi", "Arduino", "ESP32 Microcontrollers", "LoRa Wireless", "Embedded C/C++"] 
+  },
+  { 
+    category: "IT & Infrastructure", 
+    items: ["Hardware Diagnostics", "PC Assembly & Repair", "OS Deployment", "Network Troubleshooting", "Linux", "UDP/IP"] 
+  },
+  { 
+    category: "Tools", 
+    items: ["Git", "Figma", "Docker", "Vercel"] 
+  },
 ];
 
 const traits = [
   {
     icon: Code2,
-    title: "Clean Code",
-    desc: "I write readable, maintainable code that scales with your project.",
+    title: "Engineered Code",
+    desc: "I apply structured computer engineering principles to write clean, modular, and easy-to-read code.",
   },
   {
-    icon: Palette,
-    title: "Great Design",
-    desc: "I care deeply about UI/UX — beautiful and functional go hand in hand.",
+    icon: Cpu,
+    title: "Hardware to Software",
+    desc: "I understand systems end-to-end—from multi-microcontroller architectures to full-stack web applications.",
   },
   {
-    icon: Zap,
-    title: "Fast Delivery",
-    desc: "I ship quickly without cutting corners, keeping you in the loop always.",
+    icon: Wrench,
+    title: "Hands-on Troubleshooter",
+    desc: "Years of diagnosing hardware and networking faults mean I don't back down from complex, hard-to-find bugs.",
   },
   {
-    icon: Globe,
-    title: "Full Stack",
-    desc: "From database to deployment, I handle the entire product lifecycle.",
+    icon: Lightbulb,
+    title: "Adaptive Learner",
+    desc: "As a scholar graduate, I am built to absorb documentation quickly, master new stacks, and adapt to team workflows.",
   },
 ];
 
@@ -151,18 +167,18 @@ export default function About() {
               lineHeight: 1.8,
               marginBottom: "1.5rem",
             }}>
-              Hey! I&apos;m a developer based in the Philippines with a passion
-              for crafting digital experiences that are both visually stunning
-              and technically solid.
+              Hey! I&apos;m a Computer Engineering graduate based in the Philippines. I bring together a 
+              solid foundation in full-stack web development—honed during my internship—with a practical, 
+              hands-on background in IT support and systems troubleshooting.
             </p>
             <p style={{
               color: "var(--text-secondary)",
               fontSize: "1.05rem",
               lineHeight: 1.8,
             }}>
-              When I&apos;m not coding, you&apos;ll find me exploring new design
-              trends, contributing to open source, or leveling up my skills in
-              the ever-evolving web ecosystem.
+              Whether I&apos;m building modern web apps using React, Vue, and Nuxt, diagnosing complex 
+              hardware faults, or setting up automated systems, I love diving into technical problems. As a fresh grad, 
+              I am highly motivated to learn new technologies, read documentation, and quickly adapt to a team&apos;s workflow.
             </p>
           </motion.div>
         </div>

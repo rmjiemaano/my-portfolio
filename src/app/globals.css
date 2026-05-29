@@ -18,6 +18,12 @@
   .contact-grid {
     grid-template-columns: 1fr !important;
   }
+  .project-inner-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .project-image-col {
+    order: 0 !important;
+  }
 }
 
 :root {

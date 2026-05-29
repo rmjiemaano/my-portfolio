@@ -7,7 +7,6 @@ import { Menu, X } from "lucide-react";
 // Section 2.1: Navigation array updated with the "Workshop" moniker
 const navLinks = [
   { label: "About", href: "#about" },
-  { label: "Skills", href: "#skills" },
   { label: "Projects", href: "#projects" },
   { label: "Workshop", href: "#crypto-terminal" }, // Smooth-scroll anchor for your live modules
   { label: "Contact", href: "#contact" },
