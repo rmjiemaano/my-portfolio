@@ -19,9 +19,12 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: "Remejie Maano | Computer Engineer & Full-Stack Developer",
-  description: "Portfolio of Remejie Maano, a Computer Engineering graduate specializing in full-stack web development (Next.js, React, Vue) and technical IT infrastructure systems.",
-  keywords: ["Remejie Maano", "Computer Engineer", "Full-Stack Developer", "Next.js Portfolio", "Philippines Tech"],
+  description: "Portfolio of Remejie Maano, a Computer Engineering graduate specializing in full-stack web development and technical IT infrastructure.",
+  keywords: ["Remejie Maano", "Computer Engineer", "Full-Stack Developer", "Next.js Portfolio"],
   authors: [{ name: "Remejie Maano" }],
+  verification: {
+    google: "GOr5zS6GoideSaHtsoDfr9j61PLp0eYH7ur4IElVGlk",
+  },
   openGraph: {
     title: "Remejie Maano | Computer Engineer & Full-Stack Developer",
     description: "Explore my projects, full-stack technical stack, and engineering background.",
