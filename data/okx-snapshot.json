@@ -1,12 +1,8 @@
 {
-  "savedDate": "2026-05-27",
-  "previousBalance": "70.49",
+  "savedDate": "2026-05-29",
+  "previousBalance": "0.00",
   "lastTrackedBalance": "0.00",
   "history": [
-    {
-      "date": "2026-04-27",
-      "balance": "70.49"
-    },
     {
       "date": "2026-04-28",
       "balance": "70.49"
@@ -121,6 +117,10 @@
     },
     {
       "date": "2026-05-26",
+      "balance": "0.00"
+    },
+    {
+      "date": "2026-05-27",
       "balance": "0.00"
     }
   ]
