@@ -18,8 +18,15 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Remejie Maano",
-  description: "Remejie Maano — Frontend developer specializing in React, Next.js, and modern UI design.",
+  title: "Remejie Maano | Computer Engineer & Full-Stack Developer",
+  description: "Portfolio of Remejie Maano, a Computer Engineering graduate specializing in full-stack web development (Next.js, React, Vue) and technical IT infrastructure systems.",
+  keywords: ["Remejie Maano", "Computer Engineer", "Full-Stack Developer", "Next.js Portfolio", "Philippines Tech"],
+  authors: [{ name: "Remejie Maano" }],
+  openGraph: {
+    title: "Remejie Maano | Computer Engineer & Full-Stack Developer",
+    description: "Explore my projects, full-stack technical stack, and engineering background.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
