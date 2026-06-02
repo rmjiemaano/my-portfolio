@@ -14,8 +14,8 @@ const projects = [
     github: "",
     featured: true,
     mediaType: "video",
-    videoSrc: "/videos/thesis.mp4", // Stored in public/videos/thesis.mp4
-    aspectRatio: "16/9",            // Widescreen layout for the boat system
+    videoSrc: "/videos/thesis.mp4",
+    aspectRatio: "16/9",
     gradient: "linear-gradient(135deg, rgba(241,90,36,0.12), rgba(79,158,255,0.08))",
     accentColor: "var(--accent)",
     liveLabel: "Research Paper",
@@ -29,8 +29,8 @@ const projects = [
     live: "https://norsu.edu.ph/files/wuri/2025/C3-01.docx.pdf",
     featured: true,
     mediaType: "video",
-    videoSrc: "/videos/calculator.mp4", // Stored in public/videos/calculator.mp4
-    aspectRatio: "9/16",                // Premium portrait layout for mobile app view
+    videoSrc: "/videos/calculator.mp4",
+    aspectRatio: "9/16",
     gradient: "linear-gradient(135deg, rgba(79,158,255,0.12), rgba(139,92,246,0.08))",
     accentColor: "var(--accent-blue)",
     liveLabel: "Read Paper",
@@ -41,7 +41,6 @@ const projects = [
 export default function Projects() {
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
 
-  // Find the currently expanded project to figure out its structural layout constraints
   const currentExpandedProject = projects.find((p) => p.videoSrc === expandedVideo);
   const modalAspectRatio = currentExpandedProject?.aspectRatio || "9/16";
 
@@ -115,7 +114,6 @@ export default function Projects() {
       <div style={orbStyle} />
 
       <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
-        {/* Label */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -134,7 +132,6 @@ export default function Projects() {
           Selected Work
         </motion.p>
 
-        {/* Heading */}
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -153,7 +150,6 @@ export default function Projects() {
           Things I&apos;ve <span style={{ color: "var(--accent)" }}>built.</span>
         </motion.h2>
 
-        {/* Featured projects — stacked full width */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -192,93 +188,91 @@ export default function Projects() {
                         <div
                           onClick={() => setExpandedVideo(project.videoSrc || null)}
                           style={{
-                            borderRadius: project.aspectRatio === "9/16" ? "20px" : "12px",
+                            borderRadius: "16px",
                             overflow: "hidden",
-                            border: project.aspectRatio === "9/16" ? "4px solid rgba(255,255,255,0.12)" : "1px solid rgba(255,255,255,0.08)",
-                            background: "#000",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            background: "#0c0c0b",
                             position: "relative",
                             width: "100%",
-                            maxWidth: project.aspectRatio === "9/16" ? "230px" : "100%", 
-                            aspectRatio: project.aspectRatio,
+                            maxWidth: project.aspectRatio === "9/16" ? "240px" : "100%", 
                             cursor: "pointer",
-                            boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
+                            boxShadow: "0 20px 45px rgba(0,0,0,0.5)",
+                            display: "flex",
+                            flexDirection: "column",
                           }}
                           className="group"
                         >
-                          {/* Top Browser bar for 16:9 Landscape projects */}
-                          {project.aspectRatio === "16/9" && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: "24px",
-                                background: "rgba(0,0,0,0.4)",
-                                borderBottom: "1px solid rgba(255,255,255,0.06)",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "5px",
-                                padding: "0 10px",
-                                zIndex: 3,
-                              }}
-                            >
-                              {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
-                                <div
-                                  key={c}
-                                  style={{
-                                    width: "7px",
-                                    height: "7px",
-                                    borderRadius: "50%",
-                                    background: c,
-                                    opacity: 0.8,
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Hover Overlay Icon Indicator */}
-                          <div style={{
-                            position: "absolute",
-                            inset: 0,
-                            background: "rgba(0,0,0,0.3)",
-                            opacity: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            zIndex: 2,
-                            transition: "opacity 0.2s ease",
-                            paddingTop: project.aspectRatio === "16/9" ? "24px" : "0",
-                          }}
-                          className="video-hover-overlay"
-                          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                          {/* Reusable Premium Mac Window Top Bar */}
+                          <div
+                            style={{
+                              height: "30px",
+                              background: "#161614",
+                              borderBottom: "1px solid rgba(255,255,255,0.05)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              padding: "0 12px",
+                              zIndex: 3,
+                              flexShrink: 0,
+                            }}
                           >
-                            <div style={{
-                              background: "rgba(255,255,255,0.15)",
-                              backdropFilter: "blur(8px)",
-                              borderRadius: "50%",
-                              padding: "0.75rem",
-                              border: "1px solid rgba(255,255,255,0.2)"
-                            }}>
-                              <Maximize2 size={18} color="#fff" />
-                            </div>
+                            {["#ff5f57", "#febc2e", "#28c840"].map((color) => (
+                              <div
+                                key={color}
+                                style={{
+                                  width: "8px",
+                                  height: "8px",
+                                  borderRadius: "50%",
+                                  background: color,
+                                  opacity: 0.9,
+                                }}
+                              />
+                            ))}
                           </div>
 
-                          <video
-                            src={project.videoSrc}
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              paddingTop: project.aspectRatio === "16/9" ? "24px" : "0",
+                          {/* Isolated Aspect Ratio Container for Videos */}
+                          <div style={{ position: "relative", width: "100%", aspectRatio: project.aspectRatio, overflow: "hidden" }}>
+                            {/* Hover Overlay Icon Indicator */}
+                            <div style={{
+                              position: "absolute",
+                              inset: 0,
+                              background: "rgba(0,0,0,0.3)",
+                              opacity: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              zIndex: 2,
+                              transition: "opacity 0.2s ease",
                             }}
-                          />
+                            className="video-hover-overlay"
+                            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                            >
+                              <div style={{
+                                background: "rgba(255,255,255,0.15)",
+                                backdropFilter: "blur(8px)",
+                                borderRadius: "50%",
+                                padding: "0.75rem",
+                                border: "1px solid rgba(255,255,255,0.2)"
+                              }}>
+                                <Maximize2 size={18} color="#fff" />
+                              </div>
+                            </div>
+
+                            <video
+                              src={project.videoSrc}
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
                     ) : null}
@@ -312,7 +306,6 @@ export default function Projects() {
                       {project.title}
                     </h3>
 
-                    {/* Description card */}
                     <div
                       style={{
                         background: "rgba(0,0,0,0.25)",
@@ -333,7 +326,6 @@ export default function Projects() {
                       </p>
                     </div>
 
-                    {/* Tags */}
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                       {project.tags.map((tag) => (
                         <span key={tag} style={tagStyle}>
@@ -342,7 +334,6 @@ export default function Projects() {
                       ))}
                     </div>
 
-                    {/* Links */}
                     <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
                       <motion.a
                         href={project.live}
@@ -390,7 +381,7 @@ export default function Projects() {
         </motion.div>
       </div>
 
-      {/* Expandable Video Lightbox Modal Frame */}
+      {/* Lightbox Modal */}
       <AnimatePresence>
         {expandedVideo && (
           <motion.div

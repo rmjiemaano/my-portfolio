@@ -29,6 +29,8 @@ export const metadata: Metadata = {
     title: "Remejie Maano | Computer Engineer & Full-Stack Developer",
     description: "Explore my projects, full-stack technical stack, and engineering background.",
     type: "website",
+    url: "https://remejie-maano.vercel.app",
+    siteName: "Remejie Maano",
   },
 };
 
@@ -40,6 +42,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${syne.variable} ${dmSans.variable}`}>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Remejie Maano",
+              "url": "https://remejie-maano.vercel.app"
+            }),
+          }}
+        />
+
         <CursorGlow />
         <Navbar />
         {children}

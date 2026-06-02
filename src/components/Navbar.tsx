@@ -2,14 +2,11 @@
 
 import { useState, useEffect, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
 
-// Section 2.1: Navigation array updated with the "Workshop" moniker
 const navLinks = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
-  { label: "Workshop", href: "#crypto-terminal" }, // Smooth-scroll anchor for your live modules
-  { label: "Contact", href: "#contact" },
+  { label: "Workshop", href: "#crypto-terminal" },
 ];
 
 export default function Navbar() {
@@ -103,6 +100,21 @@ export default function Navbar() {
     fontFamily: "var(--font-display)",
   };
 
+  const variantLine1 = {
+    closed: { rotate: 0, y: 0 },
+    opened: { rotate: 45, y: 6 },
+  };
+
+  const variantLine2 = {
+    closed: { opacity: 1, scaleX: 1 },
+    opened: { opacity: 0, scaleX: 0 },
+  };
+
+  const variantLine3 = {
+    closed: { rotate: 0, y: 0 },
+    opened: { rotate: -45, y: -6 },
+  };
+
   return (
     <>
       <motion.nav
@@ -161,10 +173,45 @@ export default function Navbar() {
           type="button"
           aria-label="Toggle menu"
           onClick={() => setMenuOpen((prev) => !prev)}
-          className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 p-2 text-white md:hidden"
-          style={{ backdropFilter: "blur(10px)" }}
+          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 text-white md:hidden"
+          style={{ 
+            backdropFilter: "blur(12px)",
+            width: "42px",
+            height: "42px",
+            padding: 0,
+            cursor: "pointer"
+          }}
         >
-          {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            style={{ display: "block" }}
+          >
+            <motion.path
+              d="M4 6h16"
+              variants={variantLine1}
+              animate={menuOpen ? "opened" : "closed"}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            />
+            <motion.path
+              d="M4 12h16"
+              variants={variantLine2}
+              animate={menuOpen ? "opened" : "closed"}
+              // FIXED: Changed from 0.2rem to 0.2
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+            />
+            <motion.path
+              d="M4 18h16"
+              variants={variantLine3}
+              animate={menuOpen ? "opened" : "closed"}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            />
+          </svg>
         </button>
       </motion.nav>
 
