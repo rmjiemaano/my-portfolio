@@ -41,8 +41,8 @@ const projects = [
     description:
       "An asynchronous event-driven backend automation engine designed to eliminate manual lead triage bottlenecks. Ingests raw HTTP webhooks, passes data payloads via dynamic string interpolation to an LLM for structured analysis, processes outputs using optimized JavaScript objects, maps records to a database matrix, and dispatches parallel communication streams.",
     tags: ["n8n", "DeepSeek-V3", "JavaScript (ES6)", "Webhooks", "Google Sheets API", "Discord Webhook"],
-    live: "https://github.com/YOUR_GITHUB_USERNAME/n8n-ai-lead-classifier", // Replace with your GitHub URL when ready
-    github: "https://github.com/YOUR_GITHUB_USERNAME/n8n-ai-lead-classifier",
+    live: "https://github.com/rmjiemaano/ai-lead-ingestion-pipeline", // Replace with your GitHub URL when ready
+    github: "https://github.com/rmjiemaano/ai-lead-ingestion-pipeline",
     featured: true,
     mediaType: "video",
     videoSrc: "/videos/ai-lead-ingestion-pipeline.mp4",
