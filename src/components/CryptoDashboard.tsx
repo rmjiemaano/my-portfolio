@@ -76,13 +76,12 @@ export function CryptoDashboard() {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     async function initFetch() {
       try {
         const response = await fetch("/api/okx", { signal: controller.signal });
         clearTimeout(timeoutId);
-
         if (!response.ok) {
           if (active) setError(`Server returned connectivity fault code: ${response.status}`);
           if (active) setLoading(false);

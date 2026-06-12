@@ -2,8 +2,9 @@
 
 import { useState, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, GitBranch, FileText, Maximize2, X } from "lucide-react";
+import { ArrowUpRight, GitBranch, FileText, Play, X } from "lucide-react";
 
+// Project schema mapping YouTube video IDs
 const projects = [
   {
     title: "Autonomous Smart Floating Waste Collector with Integrated Docking System",
@@ -14,7 +15,7 @@ const projects = [
     github: "",
     featured: true,
     mediaType: "video",
-    videoSrc: "/videos/thesis.mp4",
+    youtubeId: "ofydz2heemE",
     aspectRatio: "16/9",
     gradient: "linear-gradient(135deg, rgba(241,90,36,0.12), rgba(79,158,255,0.08))",
     accentColor: "var(--accent)",
@@ -29,7 +30,7 @@ const projects = [
     live: "https://norsu.edu.ph/files/wuri/2025/C3-01.docx.pdf",
     featured: true,
     mediaType: "video",
-    videoSrc: "/videos/calculator.mp4",
+    youtubeId: "MKk9aJE-dEM",
     aspectRatio: "9/16",
     gradient: "linear-gradient(135deg, rgba(79,158,255,0.12), rgba(139,92,246,0.08))",
     accentColor: "var(--accent-blue)",
@@ -41,11 +42,11 @@ const projects = [
     description:
       "An asynchronous event-driven backend automation engine designed to eliminate manual lead triage bottlenecks. Ingests raw HTTP webhooks, passes data payloads via dynamic string interpolation to an LLM for structured analysis, processes outputs using optimized JavaScript objects, maps records to a database matrix, and dispatches parallel communication streams.",
     tags: ["n8n", "DeepSeek-V3", "JavaScript (ES6)", "Webhooks", "Google Sheets API", "Discord Webhook"],
-    live: "https://github.com/rmjiemaano/ai-lead-ingestion-pipeline", // Replace with your GitHub URL when ready
+    live: "https://github.com/rmjiemaano/ai-lead-ingestion-pipeline",
     github: "https://github.com/rmjiemaano/ai-lead-ingestion-pipeline",
     featured: true,
     mediaType: "video",
-    videoSrc: "/videos/ai-lead-ingestion-pipeline.mp4",
+    youtubeId: "EYaTGytEIaU",
     aspectRatio: "16/9",
     gradient: "linear-gradient(135deg, rgba(255, 79, 139, 0.12), rgba(139, 92, 246, 0.08))",
     accentColor: "var(--accent)",
@@ -54,11 +55,37 @@ const projects = [
   },
 ];
 
+// Self-healing thumbnail utility component
+function ProjectThumbnail({ youtubeId, title }: { youtubeId: string; title: string }) {
+  const [imgSrc, setImgSrc] = useState(`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`);
+
+  return (
+    <img
+      src={imgSrc}
+      alt={title}
+      loading="lazy"
+      onLoad={(e) => {
+        const img = e.currentTarget;
+        // YouTube's empty fallback error banner is strictly 120x90px
+        if (img.naturalWidth === 120 && img.naturalHeight === 90) {
+          setImgSrc(`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`);
+        }
+      }}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        display: "block",
+      }}
+    />
+  );
+}
+
 export default function Projects() {
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
 
-  const currentExpandedProject = projects.find((p) => p.videoSrc === expandedVideo);
-  const modalAspectRatio = currentExpandedProject?.aspectRatio || "9/16";
+  const currentExpandedProject = projects.find((p) => p.youtubeId === expandedVideo);
+  const modalAspectRatio = currentExpandedProject?.aspectRatio || "16/9";
 
   const sectionStyle: CSSProperties = {
     position: "relative",
@@ -202,7 +229,7 @@ export default function Projects() {
                     {project.mediaType === "video" ? (
                       <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
                         <div
-                          onClick={() => setExpandedVideo(project.videoSrc || null)}
+                          onClick={() => setExpandedVideo(project.youtubeId || null)}
                           style={{
                             borderRadius: "16px",
                             overflow: "hidden",
@@ -246,47 +273,43 @@ export default function Projects() {
                             ))}
                           </div>
 
-                          {/* Isolated Aspect Ratio Container for Videos */}
+                          {/* Isolated Aspect Ratio Container for Thumbnails */}
                           <div style={{ position: "relative", width: "100%", aspectRatio: project.aspectRatio, overflow: "hidden" }}>
-                            {/* Hover Overlay Icon Indicator */}
-                            <div style={{
-                              position: "absolute",
-                              inset: 0,
-                              background: "rgba(0,0,0,0.3)",
-                              opacity: 0,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              zIndex: 2,
-                              transition: "opacity 0.2s ease",
-                            }}
-                            className="video-hover-overlay"
-                            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                            {/* Hover Overlay Play Icon Indicator */}
+                            <div 
+                              style={{
+                                position: "absolute",
+                                inset: 0,
+                                background: "rgba(0,0,0,0.4)",
+                                opacity: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                zIndex: 2,
+                                transition: "opacity 0.2s ease",
+                              }}
+                              className="video-hover-overlay"
+                              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
                             >
                               <div style={{
-                                background: "rgba(255,255,255,0.15)",
-                                backdropFilter: "blur(8px)",
+                                background: "var(--accent)",
                                 borderRadius: "50%",
-                                padding: "0.75rem",
-                                border: "1px solid rgba(255,255,255,0.2)"
+                                padding: "0.9rem",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                boxShadow: "0 0 20px var(--accent-glow)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
                               }}>
-                                <Maximize2 size={18} color="#fff" />
+                                <Play size={18} fill="#fff" color="#fff" style={{ transform: "translateX(1px)" }} />
                               </div>
                             </div>
 
-                            <video
-                              src={project.videoSrc}
-                              autoPlay
-                              loop
-                              muted
-                              playsInline
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                display: "block",
-                              }}
+                            {/* Self-Healing YouTube Thumbnail Implementation */}
+                            <ProjectThumbnail 
+                              youtubeId={project.youtubeId} 
+                              title={project.title} 
                             />
                           </div>
                         </div>
@@ -397,7 +420,7 @@ export default function Projects() {
         </motion.div>
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Lightbox Modal with Native Optimized YouTube Streams */}
       <AnimatePresence>
         {expandedVideo && (
           <motion.div
@@ -408,8 +431,8 @@ export default function Projects() {
             style={{
               position: "fixed",
               inset: 0,
-              background: "rgba(0, 0, 0, 0.85)",
-              backdropFilter: "blur(12px)",
+              background: "rgba(0, 0, 0, 0.9)",
+              backdropFilter: "blur(16px)",
               zIndex: 9999,
               display: "flex",
               alignItems: "center",
@@ -434,40 +457,42 @@ export default function Projects() {
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
+                zIndex: 10000,
               }}
             >
               <X size={20} />
             </motion.button>
 
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              exit={{ scale: 0.95, y: 15 }}
+              transition={{ type: "spring", damping: 28, stiffness: 320 }}
               onClick={(e) => e.stopPropagation()} 
               style={{
                 position: "relative",
-                width: modalAspectRatio === "16/9" ? "min(90vw, 1050px)" : "auto",
-                height: modalAspectRatio === "16/9" ? "auto" : "85vh",
+                width: modalAspectRatio === "16/9" ? "min(92vw, 1100px)" : "auto",
+                height: modalAspectRatio === "16/9" ? "auto" : "82vh",
                 aspectRatio: modalAspectRatio,
                 background: "#000",
                 borderRadius: "24px",
                 overflow: "hidden",
                 border: "1px solid rgba(255,255,255,0.1)",
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)",
+                boxShadow: "0 30px 60px -15px rgba(0, 0, 0, 0.9)",
                 cursor: "default",
               }}
             >
-              <video
-                src={expandedVideo}
-                autoPlay
-                controls
-                loop
-                playsInline
+              <iframe
+                src={`https://www.youtube.com/embed/${expandedVideo}?autoplay=1&rel=0&modestbranding=1&showinfo=0`}
+                title={currentExpandedProject?.title || "Project Video Presentation"}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "contain",
+                  border: "none",
+                  display: "block",
                 }}
               />
             </motion.div>
