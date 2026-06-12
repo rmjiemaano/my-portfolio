@@ -289,8 +289,13 @@ export function CryptoDashboard() {
               </div>
             )}
 
-            {/* Split Grid: Assets Allocation Profile & Behind the Terminal Context */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "2rem", alignItems: "start" }}>
+            {/* Split Grid FIXED for Mobile views: Replaces '1.3fr 1fr' with fluid auto-fit mapping */}
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))", 
+              gap: "2rem", 
+              alignItems: "start" 
+            }}>
               
               {/* Asset Allocation Profile */}
               <div style={cardStyle}>
