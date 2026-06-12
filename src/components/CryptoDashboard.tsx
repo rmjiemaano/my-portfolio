@@ -34,19 +34,34 @@ export function CryptoDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [isSimulated, setIsSimulated] = useState<boolean>(false);
 
+  // Time-bounded data fetcher with explicit Abort tracking
   const processFetch = useCallback(async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000); // 7-second hard cutoff
+
     try {
-      const response = await fetch("/api/okx");
+      const response = await fetch("/api/okx", { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+
       const result = await response.json();
-      if (response.ok && result.success) {
+      if (result.success) {
         setMetrics(result.data);
         setIsSimulated(!!result.simulated);
         setError(null);
       } else {
         setError(result.error || "An unexpected error occurred while parsing API response logs.");
       }
-    } catch {
-      setError("Failed to construct standard transport loop connection over local interfaces.");
+    } catch (err) {
+      // FIXED: Removed explicit 'any' and applied a proper instance check
+      if (err instanceof Error && err.name === "AbortError") {
+        setError("Network connection slot timed out. Check for media/video stream blocks.");
+      } else {
+        setError("Failed to construct standard transport loop connection over local interfaces.");
+      }
     } finally {
       setLoading(false);
     }
@@ -60,25 +75,50 @@ export function CryptoDashboard() {
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
     async function initFetch() {
       try {
-        const response = await fetch("/api/okx");
-        const result = await response.json();
-        if (active && response.ok && result.success) {
-          setMetrics(result.data);
-          setIsSimulated(!!result.simulated);
-          setError(null);
+        const response = await fetch("/api/okx", { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          if (active) setError(`Server returned connectivity fault code: ${response.status}`);
+          if (active) setLoading(false);
+          return;
         }
-      } catch {
+
+        const result = await response.json();
         if (active) {
-          setError("Initial balance pipeline handshake dropped on synchronization pass.");
+          if (result.success) {
+            setMetrics(result.data);
+            setIsSimulated(!!result.simulated);
+            setError(null);
+          } else {
+            setError(result.error || "Node handshake returned non-success telemetry.");
+          }
+        }
+      } catch (err) {
+        // FIXED: Removed explicit 'any' and applied a proper instance check
+        if (active) {
+          if (err instanceof Error && err.name === "AbortError") {
+            setError("Initial initialization pass timed out. Domain connection pool exhausted.");
+          } else {
+            setError("Initial balance pipeline handshake dropped on synchronization pass.");
+          }
         }
       } finally {
         if (active) setLoading(false);
       }
     }
+
     initFetch();
-    return () => { active = false; };
+    return () => { 
+      active = false; 
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, []);
 
   const pnlNum = parseFloat(metrics?.dailyPnL || "0");
@@ -112,7 +152,6 @@ export function CryptoDashboard() {
 
   const { linePath, areaPath } = generateChartPath();
 
-  // Unified Styling Constants
   const cardStyle: CSSProperties = {
     background: "rgba(255,255,255,0.02)",
     border: "1px solid rgba(255,255,255,0.06)",
@@ -289,7 +328,7 @@ export function CryptoDashboard() {
               </div>
             )}
 
-            {/* Split Grid FIXED for Mobile views: Replaces '1.3fr 1fr' with fluid auto-fit mapping */}
+            {/* Split Grid */}
             <div style={{ 
               display: "grid", 
               gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))", 
