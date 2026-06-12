@@ -275,22 +275,26 @@ export default function Projects() {
 
                           {/* Isolated Aspect Ratio Container for Thumbnails */}
                           <div style={{ position: "relative", width: "100%", aspectRatio: project.aspectRatio, overflow: "hidden" }}>
-                            {/* Hover Overlay Play Icon Indicator */}
+                            {/* Permanent Overlay Play Icon Indicator */}
                             <div 
                               style={{
                                 position: "absolute",
                                 inset: 0,
-                                background: "rgba(0,0,0,0.4)",
-                                opacity: 0,
+                                background: "rgba(0,0,0,0.25)",
+                                opacity: 1,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 zIndex: 2,
-                                transition: "opacity 0.2s ease",
+                                transition: "background 0.2s ease, transform 0.2s ease",
                               }}
-                              className="video-hover-overlay"
-                              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                              className="video-overlay"
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "rgba(0,0,0,0.45)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "rgba(0,0,0,0.25)";
+                              }}
                             >
                               <div style={{
                                 background: "var(--accent)",
@@ -300,8 +304,11 @@ export default function Projects() {
                                 boxShadow: "0 0 20px var(--accent-glow)",
                                 display: "flex",
                                 alignItems: "center",
-                                justifyContent: "center"
-                              }}>
+                                justifyContent: "center",
+                                transition: "transform 0.2s ease",
+                              }}
+                              className="play-btn-circle"
+                              >
                                 <Play size={18} fill="#fff" color="#fff" style={{ transform: "translateX(1px)" }} />
                               </div>
                             </div>
