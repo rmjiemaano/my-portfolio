@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, GitBranch, FileText, Play, X } from "lucide-react";
+import { GitBranch, FileText, Play, X } from "lucide-react";
 
 // Project schema mapping YouTube video IDs
 const projects = [
@@ -55,22 +55,36 @@ const projects = [
   },
 ];
 
-// Self-healing thumbnail utility component
+// Dual-layer deterministic self-healing thumbnail resolver
 function ProjectThumbnail({ youtubeId, title }: { youtubeId: string; title: string }) {
-  const [imgSrc, setImgSrc] = useState(`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`);
+  const maxResUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+  const hqFallbackUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+  const [imgSrc, setImgSrc] = useState(maxResUrl);
+
+  useEffect(() => {
+    const testImg = new Image();
+    testImg.src = maxResUrl;
+    
+    testImg.onload = () => {
+      // Catch YouTube's standard 120x90 missing-asset image response
+      if (testImg.naturalWidth === 120 && testImg.naturalHeight === 90) {
+        setImgSrc(hqFallbackUrl);
+      } else {
+        setImgSrc(maxResUrl);
+      }
+    };
+    
+    // Catch fetch/loading errors completely
+    testImg.onerror = () => {
+      setImgSrc(hqFallbackUrl);
+    };
+  }, [youtubeId, maxResUrl, hqFallbackUrl]);
 
   return (
     <img
       src={imgSrc}
       alt={title}
       loading="lazy"
-      onLoad={(e) => {
-        const img = e.currentTarget;
-        // YouTube's empty fallback error banner is strictly 120x90px
-        if (img.naturalWidth === 120 && img.naturalHeight === 90) {
-          setImgSrc(`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`);
-        }
-      }}
       style={{
         width: "100%",
         height: "100%",
@@ -275,43 +289,40 @@ export default function Projects() {
 
                           {/* Isolated Aspect Ratio Container for Thumbnails */}
                           <div style={{ position: "relative", width: "100%", aspectRatio: project.aspectRatio, overflow: "hidden" }}>
-                            {/* Permanent Overlay Play Icon Indicator */}
-                            <div 
+                            
+                            {/* Bulletproof Play Overlay Controlled via Framer Motion Engine */}
+                            <motion.div 
+                              initial={{ background: "rgba(0,0,0,0.25)" }}
+                              whileHover={{ background: "rgba(0,0,0,0.45)" }}
                               style={{
                                 position: "absolute",
                                 inset: 0,
-                                background: "rgba(0,0,0,0.25)",
-                                opacity: 1,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 zIndex: 2,
-                                transition: "background 0.2s ease, transform 0.2s ease",
+                                transition: "background 0.2s ease",
                               }}
-                              className="video-overlay"
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = "rgba(0,0,0,0.45)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = "rgba(0,0,0,0.25)";
-                              }}
+                              className="video-hover-overlay"
                             >
-                              <div style={{
-                                background: "var(--accent)",
-                                borderRadius: "50%",
-                                padding: "0.9rem",
-                                border: "1px solid rgba(255,255,255,0.2)",
-                                boxShadow: "0 0 20px var(--accent-glow)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "transform 0.2s ease",
-                              }}
-                              className="play-btn-circle"
+                              <motion.div 
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.95 }}
+                                style={{
+                                  background: "var(--accent)",
+                                  borderRadius: "50%",
+                                  padding: "0.9rem",
+                                  border: "1px solid rgba(255,255,255,0.2)",
+                                  boxShadow: "0 0 20px var(--accent-glow)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  transition: "transform 0.2s ease",
+                                }}
                               >
                                 <Play size={18} fill="#fff" color="#fff" style={{ transform: "translateX(1px)" }} />
-                              </div>
-                            </div>
+                              </motion.div>
+                            </motion.div>
 
                             {/* Self-Healing YouTube Thumbnail Implementation */}
                             <ProjectThumbnail 
