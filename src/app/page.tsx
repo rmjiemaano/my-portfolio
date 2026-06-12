@@ -13,7 +13,7 @@ export default function Home() {
       <About />
       <Projects />
       <CryptoDashboard />
-      <RoomSensor />
+      {/* <RoomSensor /> */} {/* Commented out for now, esp32 node currently not available */}
       <Contact />
       <Footer />
     </main>
