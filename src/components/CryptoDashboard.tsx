@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, type CSSProperties } from "react";
 import { motion } from "framer-motion";
-import { Wallet, ShieldAlert, Layers, RefreshCw, Radio, CheckCircle2, TrendingUp, IceCream } from "lucide-react";
+import { Wallet, Layers, RefreshCw, Radio, CheckCircle2, TrendingUp, Skull, ShieldCheck } from "lucide-react";
 
 interface CryptoAsset {
   currency: string;
@@ -24,22 +24,24 @@ interface DashboardMetrics {
   previousEquityUsd?: string; 
   assets: CryptoAsset[];
   history: HistoryEntry[];
-  monthlyPnL: string;
-  monthlyPnLPercent: string;
+  dailyPnL: string;         
+  dailyPnLPercent: string;  
 }
 
 export function CryptoDashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSimulated, setIsSimulated] = useState<boolean>(false);
 
   const processFetch = useCallback(async () => {
     try {
       const response = await fetch("/api/okx");
       const result = await response.json();
-      
       if (response.ok && result.success) {
         setMetrics(result.data);
+        setIsSimulated(!!result.simulated);
+        setError(null);
       } else {
         setError(result.error || "An unexpected error occurred while parsing API response logs.");
       }
@@ -57,32 +59,48 @@ export function CryptoDashboard() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    processFetch();
-  }, [processFetch]);
+    let active = true;
+    async function initFetch() {
+      try {
+        const response = await fetch("/api/okx");
+        const result = await response.json();
+        if (active && response.ok && result.success) {
+          setMetrics(result.data);
+          setIsSimulated(!!result.simulated);
+          setError(null);
+        }
+      } catch {
+        if (active) {
+          setError("Initial balance pipeline handshake dropped on synchronization pass.");
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    initFetch();
+    return () => { active = false; };
+  }, []);
 
-  const currentEquity = parseFloat(metrics?.totalEquityUsd || "0");
-  const isLockedIn = true; // Retains your green "LOCKED IN" setup status header
-
-  // Decouples the chart styling to replicate the exact red/pink cliff trendline from your OKX mobile UI
-  const isChartRed = currentEquity === 0;
-  const chartThemeColor = isChartRed ? "#ef4444" : "#10b981";
+  const pnlNum = parseFloat(metrics?.dailyPnL || "0");
+  const isCooked = pnlNum < 0; 
+  const pnlColor = isCooked ? "#ef4444" : pnlNum > 0 ? "#10b981" : "#94a3b8";
+  const chartThemeColor = isCooked ? "#ef4444" : "#10b981";
 
   const generateChartPath = () => {
     if (!metrics?.history || metrics.history.length < 2) return { linePath: "", areaPath: "" };
     
     const chartWidth = 600;
     const chartHeight = 160;
-    const padding = 10;
+    const padding = 15;
     
     const values = metrics.history.map(h => parseFloat(h.balance));
-    const maxVal = Math.max(...values, 70.49) * 1.05;
-    const minVal = 0;
+    const maxVal = Math.max(...values, 15.50);
+    const minVal = Math.min(...values, 14.00);
     const range = maxVal - minVal || 1;
 
     const points = metrics.history.map((entry, index) => {
       const x = (index / (metrics.history.length - 1)) * (chartWidth - padding * 2) + padding;
-      const y = chartHeight - padding - ((parseFloat(entry.balance) - minVal) / range) * (chartHeight - padding * 2);
+      const y = chartHeight - padding - ((parseFloat(entry.balance) - minVal) / range) * (chartHeight - padding * 3);
       return { x, y };
     });
 
@@ -94,27 +112,7 @@ export function CryptoDashboard() {
 
   const { linePath, areaPath } = generateChartPath();
 
-  const panelStyle: CSSProperties = {
-    position: "relative",
-    padding: "6rem 1.5rem",
-    overflow: "hidden",
-  };
-
-  const ambientGlowStyle: CSSProperties = {
-    position: "absolute",
-    width: "600px",
-    height: "600px",
-    borderRadius: "50%",
-    background: isChartRed
-      ? "radial-gradient(circle, rgba(239,68,68,0.04), transparent 75%)"
-      : "radial-gradient(circle, rgba(16,185,129,0.05), transparent 75%)",
-    filter: "blur(90px)",
-    bottom: "-100px",
-    right: "-150px",
-    pointerEvents: "none",
-    transition: "background 0.5s ease",
-  };
-
+  // Unified Styling Constants
   const cardStyle: CSSProperties = {
     background: "rgba(255,255,255,0.02)",
     border: "1px solid rgba(255,255,255,0.06)",
@@ -131,98 +129,53 @@ export function CryptoDashboard() {
   };
 
   return (
-    <section id="crypto-terminal" style={panelStyle}>
-      <div style={ambientGlowStyle} />
-
+    <section id="crypto-terminal" style={{ position: "relative", padding: "6rem 1.5rem", overflow: "hidden" }}>
       <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
         
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          style={{
-            color: "var(--accent)",
-            fontFamily: "var(--font-display)",
-            fontWeight: 600,
-            fontSize: "0.85rem",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            marginBottom: "0.75rem",
-          }}
-        >
-          Live Node Integration
-        </motion.p>
-
+        {/* Top Header Controls */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "2.5rem", flexWrap: "wrap", gap: "1.5rem" }}>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.05 }}
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(2rem, 5vw, 3.5rem)",
-              fontWeight: 800,
-              letterSpacing: "-0.03em",
-              color: "var(--text-primary)",
-              lineHeight: 1.1,
-              margin: 0,
-            }}
-          >
-            OKX Engine <span style={{ color: "var(--accent)" }}>Terminal.</span>
-          </motion.h2>
+          <div>
+            <p style={{ color: "var(--accent)", fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "0.85rem", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
+              Live Node Integration {isSimulated && <span style={{ opacity: 0.5 }}>(Local Fallback Proxy Active)</span>}
+            </p>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text-primary)", lineHeight: 1.1, margin: 0 }}>
+              OKX Engine <span style={{ color: "var(--accent)" }}>Terminal.</span>
+            </h2>
+          </div>
 
-          <motion.button
+          <button
             onClick={handleRefresh}
             disabled={loading}
-            whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
-            whileTap={{ scale: 0.98 }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "999px",
-              padding: "0.6rem 1.25rem",
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              fontFamily: "var(--font-display)",
-              fontWeight: 600,
-            }}
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "999px", padding: "0.6rem 1.25rem", color: "var(--text-secondary)", cursor: "pointer", fontSize: "0.85rem", fontFamily: "var(--font-display)", fontWeight: 600 }}
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             Sync Metrics
-          </motion.button>
+          </button>
         </div>
 
+        {/* Core Layout Conditional Renderer */}
         {loading && !metrics ? (
-          <div style={{ ...cardStyle, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "6rem 0", gap: "1rem" }}>
-            <div className="animate-spin" style={{ width: "40px", height: "40px", border: "3px solid rgba(241,90,36,0.1)", borderTopColor: "var(--accent)", borderRadius: "50%" }} />
-            <p style={{ color: "var(--text-secondary)", fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>Decrypting node stream signatures...</p>
+          <div style={{ ...cardStyle, display: "flex", flexDirection: "column", alignItems: "center", padding: "6rem 0", gap: "1rem" }}>
+            <div style={{ width: "40px", height: "40px", border: "3px solid rgba(241,90,36,0.1)", borderTopColor: "var(--accent)", borderRadius: "50%" }} className="animate-spin" />
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>Decrypting node streams...</p>
           </div>
         ) : error ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ ...cardStyle, border: "1px solid rgba(239,68,68,0.2)", display: "flex", gap: "1.5rem", alignItems: "center" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <ShieldAlert color="#ef4444" size={24} />
-            </div>
-            <div>
-              <h4 style={{ color: "var(--text-primary)", margin: "0 0 0.25rem 0", fontFamily: "var(--font-display)", fontWeight: 700 }}>API Handshake Fault</h4>
-              <p style={{ color: "var(--text-muted)", margin: 0, fontSize: "0.9rem", lineHeight: 1.5 }}>{error}</p>
-            </div>
-          </motion.div>
+          <div style={{ ...cardStyle, borderColor: "rgba(239, 68, 68, 0.4)", color: "#ef4444" }}>
+            <h3 style={{ margin: 0, fontSize: "1.25rem" }}>Synchronization Issue Detected</h3>
+            <p style={{ color: "var(--text-secondary)", marginTop: "0.5rem", fontSize: "0.95rem" }}>{error}</p>
+          </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
             
-            {/* SETUP TRACKER PROFILE HEADER BAR */}
+            {/* Dynamic Status Header */}
             <motion.div 
               initial={{ opacity: 0, y: 15 }} 
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, y: 0 }}
               style={{
-                background: "linear-gradient(90deg, rgba(16,185,129,0.06) 0%, rgba(0,0,0,0) 100%)",
-                border: "1px solid rgba(16,185,129,0.2)",
+                background: isCooked 
+                  ? "linear-gradient(90deg, rgba(239,68,68,0.08) 0%, rgba(0,0,0,0) 100%)"
+                  : "linear-gradient(90deg, rgba(16,185,129,0.08) 0%, rgba(0,0,0,0) 100%)",
+                border: isCooked ? "1px solid rgba(239,68,68,0.25)" : "1px solid rgba(16,185,129,0.25)",
                 borderRadius: "20px",
                 padding: "1.5rem 2rem",
                 display: "flex",
@@ -237,134 +190,110 @@ export function CryptoDashboard() {
                   width: "52px",
                   height: "52px",
                   borderRadius: "14px",
-                  backgroundColor: "rgba(16,185,129,0.1)",
+                  backgroundColor: isCooked ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center"
                 }}>
-                  <IceCream size={26} color="#10b981" />
+                  {isCooked ? <Skull size={26} color="#ef4444" /> : <ShieldCheck size={26} color="#10b981" />}
                 </div>
                 <div>
                   <div style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     {"Today's Setup Tracker"}
                   </div>
                   <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginTop: "0.2rem" }}>
-                    <span style={{ fontSize: "1.75rem", fontWeight: 900, fontFamily: "var(--font-display)", color: "var(--text-primary)" }}>
-                      Status: LOCKED IN
+                    <span style={{ fontSize: "1.75rem", fontWeight: 900, fontFamily: "var(--font-display)", color: "var(--text-primary)", letterSpacing: "0.02em" }}>
+                      Status: {isCooked ? "COOKED" : "LOCKED IN"}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div style={{ textAlign: "right" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", justifyContent: "flex-end", fontWeight: 800, fontSize: "1.5rem", fontFamily: "var(--font-display)", color: "#10b981" }}>
-                  <TrendingUp size={20} />
-                  USD {metrics?.monthlyPnL}
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", justifyContent: "flex-end", fontWeight: 800, fontSize: "1.6rem", fontFamily: "var(--font-display)", color: pnlColor }}>
+                  <TrendingUp size={20} style={{ transform: isCooked ? "rotate(180deg)" : "none", color: pnlColor }} />
+                  USD {metrics?.dailyPnL}
                 </div>
                 <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: "0.15rem" }}>
-                  {"1M PnL Index Return ("}{metrics?.monthlyPnLPercent}{"%)"}
+                  {"Daily PnL Index Return ("}{metrics?.dailyPnLPercent}{"%)"}
                 </div>
               </div>
             </motion.div>
 
-            {/* BALANCE CARD TILES */}
+            {/* Core Metrics Cards Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
-              <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={cardStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Net Valuation</span>
+              <div style={cardStyle}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase" }}>Total Net Valuation</span>
                   <Wallet size={18} color="var(--accent)" />
                 </div>
-                <div style={{ fontSize: "2.25rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
+                <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
                   ${metrics?.totalEquityUsd} <span style={{ fontSize: "1rem", fontWeight: 500, color: "var(--text-muted)" }}>USD</span>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.05 }} style={cardStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Available Liquid Cash</span>
+              <div style={cardStyle}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase" }}>Available Liquid Cash</span>
                   <CheckCircle2 size={18} color="#10b981" />
                 </div>
-                <div style={{ fontSize: "2.25rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
+                <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
                   ${metrics?.totalAvailableBalance} <span style={{ fontSize: "1rem", fontWeight: 500, color: "var(--text-muted)" }}>USD</span>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} style={cardStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Isolated Core Margin</span>
+              <div style={cardStyle}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase" }}>Isolated Core Margin</span>
                   <Layers size={18} color="#3b82f6" />
                 </div>
-                <div style={{ fontSize: "2.25rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
+                <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-display)" }}>
                   ${metrics?.totalIsolatedMargin} <span style={{ fontSize: "1rem", fontWeight: 500, color: "var(--text-muted)" }}>USD</span>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
-            {/* PERFORMANCE CURVE TIMELINE CHART */}
+            {/* Performance Curve Section */}
             {metrics?.history && metrics.history.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                style={{ ...cardStyle, padding: "2rem" }}
-              >
+              <div style={{ ...cardStyle, padding: "2rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                   <div>
                     <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.25rem", color: "var(--text-primary)", fontWeight: 700 }}>
-                      1-Month Performance Curve
+                      1-Week Performance Curve
                     </h3>
                     <p style={{ margin: "0.25rem 0 0 0", color: "var(--text-muted)", fontSize: "0.85rem" }}>
-                      Rolling 30-day index validation timeline
+                      Rolling 7-day index validation timeline
                     </p>
                   </div>
                   <div style={{ fontSize: "0.8rem", background: "rgba(255,255,255,0.04)", padding: "0.3rem 0.75rem", borderRadius: "8px", color: "var(--text-secondary)", fontWeight: 600 }}>
-                    Active Period: 30D
+                    Active Period: 7D
                   </div>
                 </div>
 
-                <div style={{ width: "100%", height: "160px", position: "relative", overflow: "visible" }}>
+                <div style={{ width: "100%", height: "160px", position: "relative" }}>
                   <svg viewBox="0 0 600 160" width="100%" height="100%" preserveAspectRatio="none" style={{ overflow: "visible" }}>
                     <defs>
                       <linearGradient id="chartAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartThemeColor} stopOpacity="0.12" />
+                        <stop offset="0%" stopColor={chartThemeColor} stopOpacity="0.15" />
                         <stop offset="100%" stopColor={chartThemeColor} stopOpacity="0.0" />
                       </linearGradient>
                     </defs>
-
-                    <motion.path 
-                      key={`area-${linePath}`}
-                      d={areaPath} 
-                      fill="url(#chartAreaGradient)" 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                    />
-
-                    <motion.path 
-                      key={`line-${linePath}`}
-                      d={linePath} 
-                      fill="none" 
-                      stroke={chartThemeColor} 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{ duration: 1.2, ease: "easeInOut" }}
-                    />
+                    <path d={areaPath} fill="url(#chartAreaGradient)" />
+                    <path d={linePath} fill="none" stroke={chartThemeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.75rem", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "0.75rem" }}>
-                  <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontFamily: "var(--font-body)" }}>{metrics.history[0]?.date}</span>
-                  <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontFamily: "var(--font-body)" }}>{metrics.history[metrics.history.length - 1]?.date}</span>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>{metrics.history[0]?.date}</span>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>{metrics.history[metrics.history.length - 1]?.date}</span>
                 </div>
-              </motion.div>
+              </div>
             )}
 
-            {/* ASSET ALLOCATION PROFILE AND DOCUMENTATION WRITEUPS */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "2rem", alignItems: "start" }} className="contact-grid">
+            {/* Split Grid: Assets Allocation Profile & Behind the Terminal Context */}
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "2rem", alignItems: "start" }}>
               
-              <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} style={cardStyle}>
+              {/* Asset Allocation Profile */}
+              <div style={cardStyle}>
                 <h3 style={{ margin: "0 0 1.5rem 0", fontFamily: "var(--font-display)", fontSize: "1.25rem", color: "var(--text-primary)", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <Radio size={16} color="var(--accent)" /> Asset Allocation Profile
                 </h3>
@@ -378,7 +307,7 @@ export function CryptoDashboard() {
                           <div style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "0.25rem" }}>Available: {asset.available}</div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                          <div style={{ fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-body)" }}>{asset.equity}</div>
+                          <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{asset.equity}</div>
                           {parseFloat(asset.upl) !== 0 && (
                             <div style={{ fontSize: "0.8rem", color: parseFloat(asset.upl) >= 0 ? "#10b981" : "#ef4444", marginTop: "0.25rem" }}>
                               {parseFloat(asset.upl) >= 0 ? "+" : ""}{asset.upl} USD
@@ -391,22 +320,23 @@ export function CryptoDashboard() {
                     <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", margin: 0 }}>No active non-zero accounting targets tracked inside Unified Margin fields.</p>
                   )}
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} style={cardStyle}>
+              {/* Behind the Terminal Copywriting */}
+              <div style={cardStyle}>
                 <h3 style={{ margin: "0 0 1.5rem 0", fontFamily: "var(--font-display)", fontSize: "1.25rem", color: "var(--text-primary)", fontWeight: 700 }}>
                   Behind the Terminal
                 </h3>
-                
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.925rem", lineHeight: 1.65, margin: "0 0 1.25rem 0" }}>
-                  Why stream my actual financial assets onto a portfolio page? Because crypto is a long-standing personal hobby of mine, and handling raw market data makes for a perfect testing grounds.
+                  Why stream my actual financial assets onto a portfolio page? Because crypto is a long-standing personal hobby of mine, and handling raw market data makes for perfect portfolio testing grounds.
                 </p>
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.925rem", lineHeight: 1.65, margin: 0 }}>
                   Instead of designing a static mockup with hardcoded placeholders, I hooked up a live, restricted API token directly to the OKX order books. This panel monitors how my balances stack up compared to yesterday—giving a running readout of whether my trading setups are currently performing or completely melted down.
                 </p>
-              </motion.div>
+              </div>
 
             </div>
+            
           </div>
         )}
       </div>
